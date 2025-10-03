@@ -2,7 +2,7 @@ use anyhow::Result;
 
 use crate::config::Config;
 
-mod config;
+pub mod config;
 
 #[derive(Debug)]
 pub struct Overdrip {
