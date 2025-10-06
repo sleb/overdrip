@@ -241,7 +241,6 @@ dependencies = [
  "env_logger",
  "log",
  "serde",
- "thiserror",
  "toml",
 ]
 

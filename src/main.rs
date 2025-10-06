@@ -9,14 +9,14 @@ use directories::ProjectDirs;
 use log::{debug, error, info};
 use overdrip::{
     Overdrip,
-    config::{Config, get_or_init_config},
+    config::{Config, load_config},
 };
 
-static CONFIG_DIR: OnceLock<Option<PathBuf>> = OnceLock::new();
+static USER_PROJECT_DIR: OnceLock<Option<PathBuf>> = OnceLock::new();
 
 fn config_dir() -> Result<&'static Path> {
     let dirs = ProjectDirs::from("dev", "sleb", "overdrip");
-    let dir = CONFIG_DIR
+    let dir = USER_PROJECT_DIR
         .get_or_init(|| dirs.map(|d| d.data_dir().join("config.toml")))
         .as_ref()
         .context("Could not determine config directory")?;
@@ -39,9 +39,9 @@ fn run() -> Result<()> {
     let path = config_dir()?;
     info!("loading config from {}", path.display());
 
-    let config = get_or_init_config(path)?;
-    info!("config loaded successfully");
+    let config = load_config(path)?;
     debug!("config {config:?}");
+    info!("config loaded successfully!");
 
     run_with_config(config)
 }

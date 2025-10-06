@@ -1,8 +1,8 @@
-use std::path::Path;
+use std::{fs, path::Path};
 
-use log::debug;
+use anyhow::{Context, Result};
+use log::{debug, info};
 use serde::{Deserialize, Serialize};
-use thiserror::Error;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MonitorConfig {
@@ -19,69 +19,47 @@ impl Default for MonitorConfig {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ServerConfig {
-    pub port: u16,
-}
-
-impl Default for ServerConfig {
-    fn default() -> Self {
-        ServerConfig { port: 8080 }
-    }
-}
-
 #[derive(Default, Debug, Serialize, Deserialize)]
 pub struct Config {
     pub monitor: MonitorConfig,
-    pub server: ServerConfig,
 }
 
-#[derive(Debug, Error)]
-pub enum ConfigError {
-    #[error("Failed to read config file: '{0}': {1}")]
-    Io(String, #[source] std::io::Error),
+fn write_config(path: &Path, config: &Config) -> Result<()> {
+    let config_str = toml::to_string_pretty(&config)?;
 
-    #[error("Invalid config file path '{path}': {message}")]
-    InvalidPath { path: String, message: String },
-
-    #[error("TOML deserialization error: {0}")]
-    Deserialization(#[from] toml::de::Error),
-
-    #[error("TOML serialization error: {0}")]
-    Serialization(#[from] toml::ser::Error),
-}
-
-type Result<T> = std::result::Result<T, ConfigError>;
-
-pub fn get_or_init_config(path: &Path) -> Result<Config> {
-    let config_dir = path.parent().ok_or_else(|| ConfigError::InvalidPath {
-        path: path.display().to_string(),
-        message: "No parent directory".to_string(),
+    let config_dir = path.parent().with_context(|| {
+        format!(
+            "Couldn't determine con fig parent dir for path: '{}'",
+            path.display()
+        )
     })?;
 
     if !config_dir.exists() {
-        std::fs::create_dir_all(config_dir)
-            .map_err(|e| ConfigError::Io(config_dir.display().to_string(), e))?;
+        fs::create_dir_all(config_dir)
+            .with_context(|| format!("Failed to create '{}'", config_dir.display()))?;
         debug!("Created config directory at {}", config_dir.display());
     }
 
-    if !path.exists() {
-        let default_config = Config::default();
-        let toml_str = toml::to_string_pretty(&default_config)?;
-        std::fs::write(path, toml_str)
-            .map_err(|e| ConfigError::Io(path.display().to_string(), e))?;
-        debug!("Created default config file at {}", path.display());
-
-        return Ok(default_config);
-    }
-
-    load_config(path)
+    fs::write(path, config_str)
+        .with_context(|| format!("Failed to write config to '{}'", path.display()))?;
+    Ok(())
 }
 
-fn load_config(path: &Path) -> Result<Config> {
-    let contents = std::fs::read_to_string(path)
-        .map_err(|e| ConfigError::Io(path.display().to_string(), e))?;
+fn init_config(path: &Path) -> Result<()> {
+    write_config(path, &Config::default())
+}
 
-    let config: Config = toml::from_str(&contents)?;
-    Ok(config)
+pub fn load_config(path: &Path) -> Result<Config> {
+    if !path.exists() {
+        info!(
+            "Config file '{}' does not exist, creating default",
+            path.display()
+        );
+        init_config(path)?;
+    }
+
+    let contents = fs::read_to_string(path)
+        .with_context(|| format!("Failed to read config file '{}'", path.display()))?;
+
+    Ok(toml::from_str(&contents)?)
 }
