@@ -2,6 +2,7 @@ use anyhow::Result;
 
 use crate::config::Config;
 
+pub mod cli;
 pub mod config;
 
 #[derive(Debug)]

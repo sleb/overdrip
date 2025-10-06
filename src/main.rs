@@ -4,29 +4,26 @@ use std::{
     sync::OnceLock,
 };
 
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, anyhow};
+use clap::Parser;
 use directories::ProjectDirs;
 use log::{debug, error, info};
 use overdrip::{
     Overdrip,
+    cli::Cli,
     config::{Config, load_config},
 };
 
-static USER_PROJECT_DIR: OnceLock<Option<PathBuf>> = OnceLock::new();
-
-fn config_dir() -> Result<&'static Path> {
-    let dirs = ProjectDirs::from("dev", "sleb", "overdrip");
-    let dir = USER_PROJECT_DIR
-        .get_or_init(|| dirs.map(|d| d.data_dir().join("config.toml")))
-        .as_ref()
+fn default_config_path() -> Result<PathBuf> {
+    let path = ProjectDirs::from("dev", "sleb", "overdrip")
+        .map(|d| d.data_dir().join("config.toml"))
         .context("Could not determine config directory")?;
 
-    Ok(dir)
+    Ok(path)
 }
 
 fn main() {
     env_logger::init();
-    info!("starting overdrip");
 
     if let Err(e) = run() {
         error!("Error: {e}");
@@ -36,16 +33,19 @@ fn main() {
 }
 
 fn run() -> Result<()> {
-    let path = config_dir()?;
-    info!("loading config from {}", path.display());
+    let cli = Cli::parse();
+    debug!("CLI args: {cli:?}");
 
-    let config = load_config(path)?;
+    let config_path = cli
+        .config
+        .ok_or(anyhow!("Config path not specified on the CLI"))
+        .or(default_config_path())?;
+    info!("using config path: '{}'", &config_path.display());
+
+    let config = load_config(&config_path)?;
     debug!("config {config:?}");
     info!("config loaded successfully!");
+    Overdrip::new(config).run()?;
 
-    run_with_config(config)
-}
-
-fn run_with_config(config: Config) -> Result<()> {
-    Overdrip::new(config).run()
+    Ok(())
 }
