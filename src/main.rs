@@ -1,4 +1,5 @@
 use std::{
+    ops::Sub,
     path::{Path, PathBuf},
     process,
     sync::OnceLock,
@@ -10,7 +11,7 @@ use directories::ProjectDirs;
 use log::{debug, error, info};
 use overdrip::{
     Overdrip,
-    cli::Cli,
+    cli::{Cli, Subcommand},
     config::{Config, load_config},
 };
 
@@ -45,7 +46,15 @@ fn run() -> Result<()> {
     let config = load_config(&config_path)?;
     debug!("config {config:?}");
     info!("config loaded successfully!");
-    Overdrip::new(config).run()?;
+
+    let overdrip = Overdrip::new(config);
+
+    match &cli.subcommand {
+        Subcommand::Run => overdrip.run()?,
+        Subcommand::Config => overdrip.config()?,
+        Subcommand::Login => overdrip.login()?,
+        Subcommand::Logout => overdrip.logout()?,
+    }
 
     Ok(())
 }

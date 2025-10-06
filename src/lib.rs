@@ -19,4 +19,19 @@ impl Overdrip {
         println!("Overdrip is running!");
         Ok(())
     }
+
+    pub fn config(&self) -> Result<()> {
+        println!("Managing configuration!");
+        Ok(())
+    }
+
+    pub fn login(&self) -> Result<()> {
+        println!("Logging in!");
+        Ok(())
+    }
+
+    pub fn logout(&self) -> Result<()> {
+        println!("Logging out!");
+        Ok(())
+    }
 }
