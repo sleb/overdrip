@@ -29,7 +29,7 @@ fn write_config(path: &Path, config: &Config) -> Result<()> {
 
     let config_dir = path.parent().with_context(|| {
         format!(
-            "Couldn't determine con fig parent dir for path: '{}'",
+            "Couldn't determine config parent dir for path: '{}'",
             path.display()
         )
     })?;

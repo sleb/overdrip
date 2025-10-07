@@ -20,11 +20,11 @@ impl Overdrip {
         Ok(())
     }
 
-    pub fn login(&self) {
+    pub fn login(&self) -> Result<()> {
         todo!()
     }
 
-    pub fn logout(&self) {
+    pub fn logout(&self) -> Result<()> {
         todo!()
     }
 }

@@ -50,8 +50,8 @@ fn run() -> Result<()> {
             config::Subcommand::Edit => config::edit(&config_path)?,
             config::Subcommand::Show => config::show(&overdrip.config)?,
         },
-        Subcommand::Login => overdrip.login(),
-        Subcommand::Logout => overdrip.logout(),
+        Subcommand::Login => overdrip.login()?,
+        Subcommand::Logout => overdrip.logout()?,
     }
 
     Ok(())
