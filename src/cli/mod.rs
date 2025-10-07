@@ -1,3 +1,5 @@
+pub mod config;
+
 /// Command line interface for Overdrip
 #[derive(clap::Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -17,7 +19,10 @@ pub enum Subcommand {
     Run,
 
     /// Manage configuration
-    Config,
+    Config {
+        #[command(subcommand)]
+        subcommand: config::Subcommand,
+    },
 
     /// Authenticate with the service
     Login,

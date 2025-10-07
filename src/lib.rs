@@ -7,7 +7,7 @@ pub mod config;
 
 #[derive(Debug)]
 pub struct Overdrip {
-    config: Config,
+    pub config: Config,
 }
 
 impl Overdrip {
@@ -20,18 +20,11 @@ impl Overdrip {
         Ok(())
     }
 
-    pub fn config(&self) -> Result<()> {
-        println!("Managing configuration!");
-        Ok(())
+    pub fn login(&self) {
+        todo!()
     }
 
-    pub fn login(&self) -> Result<()> {
-        println!("Logging in!");
-        Ok(())
-    }
-
-    pub fn logout(&self) -> Result<()> {
-        println!("Logging out!");
-        Ok(())
+    pub fn logout(&self) {
+        todo!()
     }
 }

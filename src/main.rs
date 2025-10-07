@@ -1,9 +1,4 @@
-use std::{
-    ops::Sub,
-    path::{Path, PathBuf},
-    process,
-    sync::OnceLock,
-};
+use std::{path::PathBuf, process};
 
 use anyhow::{Context, Result, anyhow};
 use clap::Parser;
@@ -11,8 +6,8 @@ use directories::ProjectDirs;
 use log::{debug, error, info};
 use overdrip::{
     Overdrip,
-    cli::{Cli, Subcommand},
-    config::{Config, load_config},
+    cli::{Cli, Subcommand, config},
+    config::load_config,
 };
 
 fn default_config_path() -> Result<PathBuf> {
@@ -51,9 +46,12 @@ fn run() -> Result<()> {
 
     match &cli.subcommand {
         Subcommand::Run => overdrip.run()?,
-        Subcommand::Config => overdrip.config()?,
-        Subcommand::Login => overdrip.login()?,
-        Subcommand::Logout => overdrip.logout()?,
+        Subcommand::Config { subcommand } => match subcommand {
+            config::Subcommand::Edit => config::edit(&config_path)?,
+            config::Subcommand::Show => config::show(&overdrip.config)?,
+        },
+        Subcommand::Login => overdrip.login(),
+        Subcommand::Logout => overdrip.logout(),
     }
 
     Ok(())
