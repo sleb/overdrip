@@ -2,6 +2,7 @@ use anyhow::Result;
 
 use crate::config::Config;
 
+mod auth;
 pub mod cli;
 pub mod config;
 
@@ -20,8 +21,8 @@ impl Overdrip {
         Ok(())
     }
 
-    pub fn login(&self) -> Result<()> {
-        todo!()
+    pub async fn login(&self) -> Result<()> {
+        auth::login().await
     }
 
     pub fn logout(&self) -> Result<()> {

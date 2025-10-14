@@ -1,4 +1,4 @@
-use std::{path::PathBuf, process};
+use std::{path::PathBuf, process, sync::OnceLock};
 
 use anyhow::{Context, Result, anyhow};
 use clap::Parser;
@@ -10,25 +10,44 @@ use overdrip::{
     config::load_config,
 };
 
+static PROJECT_DIR: OnceLock<Option<PathBuf>> = OnceLock::new();
+
+fn project_dir() -> Option<&'static PathBuf> {
+    PROJECT_DIR
+        .get_or_init(|| {
+            ProjectDirs::from("dev", "sleb", "overdrip").map(|d| d.data_dir().to_path_buf())
+        })
+        .as_ref()
+}
+
 fn default_config_path() -> Result<PathBuf> {
-    let path = ProjectDirs::from("dev", "sleb", "overdrip")
-        .map(|d| d.data_dir().join("config.toml"))
-        .context("Could not determine config directory")?;
+    let path = project_dir()
+        .context("Could not determine config directory")?
+        .join("config.toml");
 
     Ok(path)
 }
 
-fn main() {
+fn default_auth_path() -> Result<PathBuf> {
+    let path = project_dir()
+        .context("Could not determine auth director")?
+        .join("auth.json");
+
+    Ok(path)
+}
+
+#[tokio::main]
+async fn main() {
     env_logger::init();
 
-    if let Err(e) = run() {
+    if let Err(e) = run().await {
         error!("Error: {e}");
         debug!("Error: {e:?}");
         process::exit(1);
     }
 }
 
-fn run() -> Result<()> {
+async fn run() -> Result<()> {
     let cli = Cli::parse();
     debug!("CLI args: {cli:?}");
 
@@ -50,7 +69,7 @@ fn run() -> Result<()> {
             config::Subcommand::Edit => config::edit(&config_path)?,
             config::Subcommand::Show => config::show(&overdrip.config)?,
         },
-        Subcommand::Login => overdrip.login()?,
+        Subcommand::Login => overdrip.login().await?,
         Subcommand::Logout => overdrip.logout()?,
     }
 
