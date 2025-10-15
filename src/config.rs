@@ -1,8 +1,13 @@
-use std::{fs, path::Path};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 use anyhow::{Context, Result};
 use log::{debug, info};
 use serde::{Deserialize, Serialize};
+
+use crate::default_auth_path;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MonitorConfig {
@@ -19,9 +24,19 @@ impl Default for MonitorConfig {
     }
 }
 
-#[derive(Default, Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
     pub monitor: MonitorConfig,
+    pub tokens_path: PathBuf,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Config {
+            monitor: MonitorConfig::default(),
+            tokens_path: default_auth_path(),
+        }
+    }
 }
 
 fn write_config(path: &Path, config: &Config) -> Result<()> {

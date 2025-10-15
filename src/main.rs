@@ -1,40 +1,14 @@
-use std::{path::PathBuf, process, sync::OnceLock};
+use std::process;
 
-use anyhow::{Context, Result, anyhow};
+use anyhow::Result;
 use clap::Parser;
-use directories::ProjectDirs;
 use log::{debug, error, info};
 use overdrip::{
     Overdrip,
     cli::{Cli, Subcommand, config},
     config::load_config,
+    default_config_path,
 };
-
-static PROJECT_DIR: OnceLock<Option<PathBuf>> = OnceLock::new();
-
-fn project_dir() -> Option<&'static PathBuf> {
-    PROJECT_DIR
-        .get_or_init(|| {
-            ProjectDirs::from("dev", "sleb", "overdrip").map(|d| d.data_dir().to_path_buf())
-        })
-        .as_ref()
-}
-
-fn default_config_path() -> Result<PathBuf> {
-    let path = project_dir()
-        .context("Could not determine config directory")?
-        .join("config.toml");
-
-    Ok(path)
-}
-
-fn default_auth_path() -> Result<PathBuf> {
-    let path = project_dir()
-        .context("Could not determine auth director")?
-        .join("auth.json");
-
-    Ok(path)
-}
 
 #[tokio::main]
 async fn main() {
@@ -51,10 +25,7 @@ async fn run() -> Result<()> {
     let cli = Cli::parse();
     debug!("CLI args: {cli:?}");
 
-    let config_path = cli
-        .config
-        .ok_or(anyhow!("Config path not specified on the CLI"))
-        .or(default_config_path())?;
+    let config_path = cli.config.unwrap_or(default_config_path());
     info!("using config path: '{}'", &config_path.display());
 
     let config = load_config(&config_path)?;

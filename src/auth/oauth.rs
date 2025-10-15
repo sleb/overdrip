@@ -10,6 +10,8 @@ use tokio::{
     sync::{mpsc::channel, oneshot},
 };
 
+use crate::auth::Tokens;
+
 pub(crate) const CLIENT_ID: &str = env!("OAUTH_CLIENT_ID");
 pub(crate) const CLIENT_SECRET: &str = env!("OAUTH_CLIENT_SECRET");
 
@@ -105,7 +107,7 @@ impl TokenRequest {
     }
 }
 
-pub(crate) async fn exchange_code_for_tokens(code_verifier: &str, code: &str) -> Result<()> {
+pub(crate) async fn exchange_code_for_tokens(code_verifier: &str, code: &str) -> Result<Tokens> {
     let client = reqwest::Client::new();
     let request = client
         .post("https://oauth2.googleapis.com/token")
@@ -113,7 +115,7 @@ pub(crate) async fn exchange_code_for_tokens(code_verifier: &str, code: &str) ->
     debug!("requesting tokens: {request:?}");
 
     let res = request.send().await?;
-    debug!("Token response: {:?}", res.text().await?);
-
-    Ok(())
+    res.json::<Tokens>()
+        .await
+        .context("Failed to parse token response")
 }
