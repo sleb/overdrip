@@ -1,0 +1,13 @@
+{
+  "name": "@overdrip/core",
+  "type": "module",
+  "exports": {
+    "./config": { "import": "./src/config.ts" },
+    "./firebase": { "import": "./src/firebase.ts" },
+    "./schemas": { "import": "./src/schemas.ts" }
+  },
+  "dependencies": {
+    "firebase": "^12.4.0",
+    "zod": "^3.24.1"
+  }
+}

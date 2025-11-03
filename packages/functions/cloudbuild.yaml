@@ -1,0 +1,25 @@
+# Custom Cloud Build configuration
+# This allows using Bun in Firebase Cloud Build
+
+steps:
+  # Install Bun
+  - name: 'gcr.io/cloud-builders/curl'
+    args: ['-fsSL', 'https://bun.sh/install', '-o', '/workspace/install-bun.sh']
+
+  - name: 'bash'
+    args: ['bash', '/workspace/install-bun.sh']
+    env:
+      - 'BUN_INSTALL=/workspace/.bun'
+
+  # Install dependencies with Bun
+  - name: 'gcr.io/cloud-builders/npm'
+    entrypoint: '/workspace/.bun/bin/bun'
+    args: ['install']
+
+  # Build with Bun
+  - name: 'gcr.io/cloud-builders/npm'
+    entrypoint: '/workspace/.bun/bin/bun'
+    args: ['run', 'build']
+
+# Note: This is optional and more complex
+# The current approach (building locally) is simpler

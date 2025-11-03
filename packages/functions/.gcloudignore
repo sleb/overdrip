@@ -1,0 +1,15 @@
+# Ignore source files - only deploy built JS
+src/
+*.ts
+!*.d.ts
+
+# Ignore development files
+tsconfig.json
+.npmrc
+firebase-debug.log
+*.local
+
+# Ignore workspace files
+../../package.json
+../../bun.lock
+../../node_modules
