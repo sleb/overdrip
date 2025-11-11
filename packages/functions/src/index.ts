@@ -1,22 +1,179 @@
+import crypto from "node:crypto";
 import {
   SetupDeviceRequestSchema,
   type SetupDeviceResponse,
-  SetupDeviceResponseSchema,
+  RefreshTokenRequestSchema,
+  type RefreshTokenResponse,
 } from "@overdrip/core/schemas";
 import { initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
-import { error } from "firebase-functions/logger";
+import { error, info } from "firebase-functions/logger";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
+import { onRequest } from "firebase-functions/v2/https";
 
 initializeApp();
+
+/**
+ * Consolidated auth code management utilities
+ */
+class AuthCodeManager {
+  private db = getFirestore();
+  private auth = getAuth();
+
+  /**
+   * Generate a cryptographically secure auth code
+   */
+  generateAuthCode(): string {
+    return crypto.randomBytes(32).toString('hex');
+  }
+
+  /**
+   * Create and store a new auth code
+   */
+  async createAuthCode(userId: string, deviceId: string, deviceName: string): Promise<string> {
+    const authCode = this.generateAuthCode();
+    const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 1 year
+
+    await this.db.collection('authCodes').doc(authCode).set({
+      userId,
+      deviceId,
+      deviceName,
+      createdAt: new Date(),
+      expiresAt,
+      lastUsed: null,
+    });
+
+    return authCode;
+  }
+
+  /**
+   * Validate and retrieve auth code data
+   */
+  async validateAuthCode(authCode: string, deviceId: string): Promise<{
+    userId: string;
+    deviceName: string;
+  }> {
+    const authCodeDoc = await this.db.collection("authCodes").doc(authCode).get();
+
+    if (!authCodeDoc.exists) {
+      throw new Error('Invalid auth code');
+    }
+
+    const authData = authCodeDoc.data()!;
+
+    // Validate auth code hasn't expired
+    if (authData.expiresAt.toDate() < new Date()) {
+      throw new Error('Auth code expired');
+    }
+
+    // Validate device ID matches
+    if (authData.deviceId !== deviceId) {
+      throw new Error('Device ID mismatch');
+    }
+
+    return {
+      userId: authData.userId,
+      deviceName: authData.deviceName
+    };
+  }
+
+  /**
+   * Generate Firebase custom token with consistent claims
+   */
+  async createCustomToken(deviceId: string, userId: string, deviceName: string, authCodePrefix: string): Promise<string> {
+    return await this.auth.createCustomToken(deviceId, {
+      deviceName,
+      userId,
+      authCodePrefix,
+    });
+  }
+
+  /**
+   * Update auth code last used timestamp
+   */
+  async markAuthCodeUsed(authCode: string): Promise<void> {
+    await this.db.collection("authCodes").doc(authCode).update({
+      lastUsed: new Date(),
+    });
+  }
+
+  /**
+   * Revoke an auth code by deleting it
+   */
+  async revokeAuthCode(authCode: string): Promise<void> {
+    await this.db.collection("authCodes").doc(authCode).delete();
+  }
+
+  /**
+   * Store or update device registration
+   */
+  async storeDeviceRegistration(
+    userId: string,
+    deviceId: string,
+    deviceName: string,
+    authCode: string,
+    isReauth: boolean
+  ): Promise<void> {
+    const deviceData: any = {
+      name: deviceName,
+      lastSetup: new Date(),
+      setupMethod: "google_oauth",
+      authCode,
+    };
+
+    // Only set registeredAt for new devices
+    if (!isReauth) {
+      deviceData.registeredAt = new Date();
+    }
+
+    await this.db
+      .collection("users")
+      .doc(userId)
+      .collection("devices")
+      .doc(deviceId)
+      .set(deviceData, { merge: true });
+  }
+
+  /**
+   * Get device data and validate ownership
+   */
+  async getDeviceData(userId: string, deviceId: string): Promise<any> {
+    const deviceDoc = await this.db
+      .collection("users")
+      .doc(userId)
+      .collection("devices")
+      .doc(deviceId)
+      .get();
+
+    if (!deviceDoc.exists) {
+      throw new Error("Device not found");
+    }
+
+    return deviceDoc.data();
+  }
+
+  /**
+   * Delete device registration
+   */
+  async deleteDevice(userId: string, deviceId: string): Promise<void> {
+    await this.db
+      .collection("users")
+      .doc(userId)
+      .collection("devices")
+      .doc(deviceId)
+      .delete();
+  }
+}
+
+const authCodeManager = new AuthCodeManager();
 
 
 
 
 /**
- * New setup device function that works with authenticated users
- * Replaces the createDevice flow with direct Google OAuth integration
+ * Modified setup device function that returns long-lived auth codes
+ * instead of custom tokens
  */
 export const setupDevice = onCall(async (req) => {
   const userId = req.auth?.uid;
@@ -33,65 +190,227 @@ export const setupDevice = onCall(async (req) => {
   const { deviceName, deviceId: providedDeviceId } = validationResult.data;
 
   try {
-    const db = getFirestore();
-    const auth = getAuth();
-
     // Generate or validate device ID
     let deviceId: string;
-    if (providedDeviceId) {
-      // Re-authentication case - validate device exists and belongs to user
-      const deviceDoc = await db
-        .collection("users")
-        .doc(userId)
-        .collection("devices")
-        .doc(providedDeviceId)
-        .get();
+    let isReauth = false;
 
-      if (!deviceDoc.exists) {
-        throw new HttpsError("not-found", "Device not found");
+    if (providedDeviceId) {
+      // Re-authentication case - validate device exists and revoke old auth code
+      const oldDeviceData = await authCodeManager.getDeviceData(userId, providedDeviceId);
+
+      if (oldDeviceData?.authCode) {
+        await authCodeManager.revokeAuthCode(oldDeviceData.authCode);
       }
 
       deviceId = providedDeviceId;
+      isReauth = true;
     } else {
       // New device case
       deviceId = crypto.randomUUID();
     }
 
-    // Create custom token for the device
-    const customToken = await auth.createCustomToken(deviceId);
+    // Create new auth code
+    const authCode = await authCodeManager.createAuthCode(userId, deviceId, deviceName);
 
-    // Store/update device registration
-    const deviceData: any = {
-      name: deviceName,
-      lastSetup: new Date(),
-      setupMethod: "google_oauth",
-    };
+    // Store device registration
+    await authCodeManager.storeDeviceRegistration(userId, deviceId, deviceName, authCode, isReauth);
 
-    // Only set registeredAt for new devices
-    if (!providedDeviceId) {
-      deviceData.registeredAt = new Date();
-    }
+    info("Device setup completed", {
+      userId,
+      deviceId,
+      deviceName,
+      isReauth,
+      authCodePrefix: authCode.substring(0, 8) + "..."
+    });
 
-    await db
-      .collection("users")
-      .doc(userId)
-      .collection("devices")
-      .doc(deviceId)
-      .set(deviceData, { merge: true });
-
+    // Return auth code instead of custom token
     const response: SetupDeviceResponse = {
       deviceId,
-      customToken,
+      authCode, // This is the long-lived token the device will use
     };
 
-    // Validate response against schema before returning
-    return SetupDeviceResponseSchema.parse(response);
+    return response;
   } catch (err) {
     if (err instanceof HttpsError) {
       throw err;
     }
 
-    error("Error setting up device:", { error: err instanceof Error ? err.message : String(err), userId });
+    error("Error setting up device:", {
+      error: err instanceof Error ? err.message : String(err),
+      userId
+    });
     throw new HttpsError("internal", "Failed to setup device");
+  }
+});
+
+/**
+ * Unauthenticated endpoint to exchange auth codes for Firebase custom tokens
+ * Devices call this on startup to get a fresh Firebase token
+ */
+export const refreshDeviceToken = onRequest(
+  {
+    cors: true,
+  },
+  async (req, res) => {
+    if (req.method === 'OPTIONS') {
+      res.status(204).send('');
+      return;
+    }
+
+    if (req.method !== 'POST') {
+      res.status(405).json({ error: 'Method not allowed' });
+      return;
+    }
+
+    try {
+      // Validate request body
+      const validationResult = RefreshTokenRequestSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        res.status(400).json({
+          error: 'Invalid request data',
+          details: validationResult.error.errors
+        });
+        return;
+      }
+
+      const { authCode, deviceId } = validationResult.data;
+      const authCodePrefix = authCode.substring(0, 8) + "...";
+
+      // Validate auth code and get user data
+      const { userId, deviceName } = await authCodeManager.validateAuthCode(authCode, deviceId);
+
+      // Generate fresh Firebase custom token
+      const customToken = await authCodeManager.createCustomToken(
+        deviceId,
+        userId,
+        deviceName,
+        authCode.substring(0, 8)
+      );
+
+      // Update last used timestamp
+      await authCodeManager.markAuthCodeUsed(authCode);
+
+      info("Token refresh successful", {
+        deviceId,
+        deviceName,
+        userId,
+        authCodePrefix
+      });
+
+      const response: RefreshTokenResponse = { customToken };
+      res.json(response);
+
+    } catch (err) {
+      const authCodePrefix = req.body?.authCode?.substring(0, 8) + "..." || "unknown";
+      const errorMessage = err instanceof Error ? err.message : String(err);
+
+      // Log appropriate level based on error type
+      if (errorMessage.includes('Invalid auth code') ||
+          errorMessage.includes('expired') ||
+          errorMessage.includes('mismatch')) {
+        info(`Token refresh failed - ${errorMessage}`, {
+          authCodePrefix,
+          deviceId: req.body?.deviceId
+        });
+        res.status(401).json({ error: errorMessage });
+      } else {
+        error("Error refreshing device token:", {
+          error: errorMessage,
+          deviceId: req.body?.deviceId,
+          authCodePrefix
+        });
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    }
+  }
+);
+
+/**
+ * Function to revoke auth codes (for device logout/deregistration)
+ */
+export const revokeDeviceToken = onCall(async (req) => {
+  const userId = req.auth?.uid;
+  if (!userId) {
+    throw new HttpsError("unauthenticated", "User must be authenticated");
+  }
+
+  const { deviceId } = req.data;
+  if (!deviceId) {
+    throw new HttpsError("invalid-argument", "deviceId is required");
+  }
+
+  try {
+    // Get device data and validate ownership
+    const deviceData = await authCodeManager.getDeviceData(userId, deviceId);
+    const authCode = deviceData.authCode;
+
+    if (authCode) {
+      // Revoke the auth code
+      await authCodeManager.revokeAuthCode(authCode);
+    }
+
+    // Remove device registration
+    await authCodeManager.deleteDevice(userId, deviceId);
+
+    info("Device revoked successfully", { userId, deviceId });
+
+    return { success: true };
+  } catch (err) {
+    if (err instanceof HttpsError) {
+      throw err;
+    }
+
+    // Handle auth code manager errors
+    if (err instanceof Error && err.message === "Device not found") {
+      throw new HttpsError("not-found", "Device not found");
+    }
+
+    error("Error revoking device:", {
+      error: err instanceof Error ? err.message : String(err),
+      userId,
+      deviceId
+    });
+    throw new HttpsError("internal", "Failed to revoke device");
+  }
+});
+
+/**
+ * List all auth codes for a user (for device management)
+ */
+export const listAuthCodes = onCall(async (req) => {
+  const userId = req.auth?.uid;
+  if (!userId) {
+    throw new HttpsError("unauthenticated", "User must be authenticated");
+  }
+
+  try {
+    const db = getFirestore();
+
+    // Get all auth codes for this user
+    const authCodesSnapshot = await db
+      .collection("authCodes")
+      .where("userId", "==", userId)
+      .orderBy("createdAt", "desc")
+      .get();
+
+    const authCodes = authCodesSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        authCodePrefix: doc.id.substring(0, 8) + "...", // Don't return full code
+        deviceId: data.deviceId,
+        deviceName: data.deviceName,
+        createdAt: data.createdAt.toDate(),
+        expiresAt: data.expiresAt.toDate(),
+        lastUsed: data.lastUsed?.toDate() || null,
+      };
+    });
+
+    return { authCodes };
+  } catch (err) {
+    error("Error listing auth codes:", {
+      error: err instanceof Error ? err.message : String(err),
+      userId
+    });
+    throw new HttpsError("internal", "Failed to list auth codes");
   }
 });

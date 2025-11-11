@@ -2,6 +2,16 @@
 
 Command-line interface for setting up and managing Overdrip plant watering devices on Raspberry Pi.
 
+## Authentication Architecture
+
+The CLI uses a hybrid authentication approach that provides "Netflix-style" device authentication:
+
+1. **Setup**: Google OAuth flow generates a long-lived device auth code (1+ year expiration)
+2. **Runtime**: Auth code is exchanged for fresh Firebase custom tokens on startup
+3. **Operation**: Firebase handles all token management during runtime, security rules work normally
+
+This gives you the simplicity of long-lived device tokens while preserving Firebase's security ecosystem.
+
 ## Installation
 
 **Development:**
@@ -17,12 +27,23 @@ bun run cli:dev setup
 ```bash
 # From workspace root - Set required environment variables
 export GOOGLE_OAUTH_CLIENT_ID=your_google_client_id
+export FIREBASE_FUNCTIONS_URL=https://us-central1-your-project.cloudfunctions.net/refreshDeviceToken
 
 # Build standalone executable
 bun run cli:build:release
 
 # Run the executable
 cd packages/cli && ./overdrip setup
+```
+
+## Configuration
+
+Create `packages/cli/.env` for development:
+
+```env
+GOOGLE_OAUTH_CLIENT_ID=your_google_oauth_client_id.apps.googleusercontent.com
+GOOGLE_OAUTH_CLIENT_SECRET=your_client_secret_if_required
+FIREBASE_FUNCTIONS_URL=https://us-central1-your-project.cloudfunctions.net/refreshDeviceToken
 ```
 
 ## Commands
@@ -43,7 +64,7 @@ overdrip setup
 5. Handles OAuth callback with PKCE security
 6. Exchanges Google ID token for Firebase authentication
 7. Calls `setupDevice` Cloud Function with user authentication
-8. Stores device credentials locally at `~/.overdrip/auth.json`
+8. Generates and stores long-lived auth code locally at `~/.overdrip/auth.json`
 9. Device is immediately registered and ready to use
 
 **Example flows:**

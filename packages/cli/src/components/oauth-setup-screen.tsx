@@ -3,7 +3,7 @@ import { Box, Text, Newline } from "ink";
 import TextInput, { UncontrolledTextInput } from "ink-text-input";
 import Spinner from "ink-spinner";
 import { oauthSetupDevice, openBrowser, type SetupProgress, type SetupResult } from "../oauth-setup";
-import { loadAuthTokens } from "../auth";
+import { deviceAuth } from "../auth";
 
 type SetupState =
   | "loading_existing"
@@ -35,13 +35,13 @@ const OAuthSetupScreen: React.FC = () => {
   useEffect(() => {
     const loadTokens = async () => {
       try {
-        const tokens = await loadAuthTokens();
-        if (tokens) {
+        const deviceInfo = deviceAuth.getDeviceInfo();
+        if (deviceInfo) {
           // Existing device - ask about name
           setScreenState({
             state: "confirm_existing_name",
-            deviceName: tokens.deviceName,
-            existingDeviceName: tokens.deviceName,
+            deviceName: deviceInfo.deviceName,
+            existingDeviceName: deviceInfo.deviceName,
           });
         } else {
           // New device - ask for name

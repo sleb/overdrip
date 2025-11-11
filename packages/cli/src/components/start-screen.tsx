@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Box, Text, Newline } from "ink";
 import Spinner from "ink-spinner";
-import { signInWithCustomToken } from "firebase/auth/web-extension";
-import { auth } from "@overdrip/core/firebase";
-import { loadAuthTokens } from "../auth";
+import { deviceAuth } from "../auth";
 
 type StartState = "loading" | "authenticating" | "running" | "error";
 
@@ -25,22 +23,23 @@ const StartScreen: React.FC = () => {
 
   const startDevice = async () => {
     try {
-      // Load stored authentication tokens
+      // Check if device is set up
       setScreenState({ state: "loading" });
 
-      const tokens = await loadAuthTokens();
-      if (!tokens) {
+      if (!deviceAuth.isSetup()) {
         throw new Error("No device credentials found. Please run 'overdrip setup' first.");
       }
 
+      const deviceInfo = deviceAuth.getDeviceInfo()!;
+
       setScreenState({
         state: "authenticating",
-        deviceName: tokens.deviceName,
-        deviceId: tokens.deviceId,
+        deviceName: deviceInfo.deviceName,
+        deviceId: deviceInfo.deviceId,
       });
 
-      // Authenticate with Firebase using custom token
-      await signInWithCustomToken(auth, tokens.customToken);
+      // Authenticate with Firebase using auth code
+      await deviceAuth.authenticate();
 
       setScreenState(prev => ({
         ...prev,

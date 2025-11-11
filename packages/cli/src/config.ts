@@ -9,6 +9,7 @@
 export interface CLIConfig {
   googleOAuthClientId: string;
   googleOAuthClientSecret?: string;
+  firebaseFunctionsUrl?: string;
 }
 
 // At build time, Bun will inline these environment variables
@@ -16,6 +17,7 @@ export interface CLIConfig {
 // Production: inlined via --define flags during build
 const GOOGLE_OAUTH_CLIENT_ID = process.env.GOOGLE_OAUTH_CLIENT_ID;
 const GOOGLE_OAUTH_CLIENT_SECRET = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
+const FIREBASE_FUNCTIONS_URL = process.env.FIREBASE_FUNCTIONS_URL;
 
 /**
  * Load configuration - validates at build time for production builds
@@ -32,6 +34,7 @@ export function loadConfig(): CLIConfig {
   return {
     googleOAuthClientId: GOOGLE_OAUTH_CLIENT_ID,
     googleOAuthClientSecret: GOOGLE_OAUTH_CLIENT_SECRET || undefined,
+    firebaseFunctionsUrl: FIREBASE_FUNCTIONS_URL || undefined,
   };
 }
 

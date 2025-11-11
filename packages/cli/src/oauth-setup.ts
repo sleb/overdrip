@@ -10,7 +10,7 @@ import {
 import { loadConfig } from "./config";
 import { generatePKCEChallenge, buildOAuthURL, exchangeCodeForTokens } from "./oauth";
 import { OAuthServer } from "./oauth-server";
-import { storeAuthTokens, loadAuthTokens } from "./auth";
+import { deviceAuth } from "./auth";
 
 export interface SetupProgress {
   step: string;
@@ -36,8 +36,8 @@ export async function oauthSetupDevice(
   const config = loadConfig();
 
   // Check if this is a re-authentication
-  const existingTokens = await loadAuthTokens();
-  const isReauth = !!existingTokens;
+  const existingDeviceInfo = deviceAuth.getDeviceInfo();
+  const isReauth = !!existingDeviceInfo;
 
   onProgress({ step: "starting_oauth_server" });
 
@@ -110,7 +110,7 @@ export async function oauthSetupDevice(
   try {
     setupResponse = await callSetupDeviceFunction(
       deviceName,
-      existingTokens?.deviceId // Pass existing device ID for re-auth
+      existingDeviceInfo?.deviceId // Pass existing device ID for re-auth
     );
   } catch (error) {
     throw new Error(`Device setup failed: ${error instanceof Error ? error.message : String(error)}`);
@@ -119,11 +119,11 @@ export async function oauthSetupDevice(
   onProgress({ step: "storing_credentials" });
 
   // Store authentication tokens
-  await storeAuthTokens({
-    deviceId: setupResponse.deviceId,
-    customToken: setupResponse.customToken,
-    deviceName,
-  });
+  await deviceAuth.storeInitialTokens(
+    setupResponse.authCode,
+    setupResponse.deviceId,
+    deviceName
+  );
 
   onProgress({ step: "complete" });
 
