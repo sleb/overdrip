@@ -26,11 +26,11 @@ const StartScreen: React.FC = () => {
       // Check if device is set up
       setScreenState({ state: "loading" });
 
-      if (!deviceAuth.isSetup()) {
+      if (!(await deviceAuth.isSetup())) {
         throw new Error("No device credentials found. Please run 'overdrip setup' first.");
       }
 
-      const deviceInfo = deviceAuth.getDeviceInfo()!;
+      const deviceInfo = (await deviceAuth.getDeviceInfo())!;
 
       setScreenState({
         state: "authenticating",

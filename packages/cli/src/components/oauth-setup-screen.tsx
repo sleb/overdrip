@@ -35,7 +35,7 @@ const OAuthSetupScreen: React.FC = () => {
   useEffect(() => {
     const loadTokens = async () => {
       try {
-        const deviceInfo = deviceAuth.getDeviceInfo();
+        const deviceInfo = await deviceAuth.getDeviceInfo();
         if (deviceInfo) {
           // Existing device - ask about name
           setScreenState({

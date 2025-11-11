@@ -36,7 +36,7 @@ export async function oauthSetupDevice(
   const config = loadConfig();
 
   // Check if this is a re-authentication
-  const existingDeviceInfo = deviceAuth.getDeviceInfo();
+  const existingDeviceInfo = await deviceAuth.getDeviceInfo();
   const isReauth = !!existingDeviceInfo;
 
   onProgress({ step: "starting_oauth_server" });

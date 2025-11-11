@@ -17,7 +17,7 @@ export class DeviceAuth {
   private tokens: ClientAuthTokens | null = null;
 
   constructor() {
-    this.loadTokens();
+    // Tokens will be loaded lazily when first accessed
   }
 
   /**
@@ -25,6 +25,8 @@ export class DeviceAuth {
    * Call this once when the process starts
    */
   async authenticate(): Promise<void> {
+    await this.ensureTokensLoaded();
+
     if (!this.tokens) {
       throw new Error("Device not set up. Run 'overdrip setup' first.");
     }
@@ -54,7 +56,7 @@ export class DeviceAuth {
 
     const config = loadConfig();
     const functionUrl = config.firebaseFunctionsUrl ||
-      'https://us-central1-overdrip-dev.cloudfunctions.net/refreshDeviceToken';
+      'https://refreshdevicetoken-h356ephhyq-uc.a.run.app';
 
     const response = await fetch(functionUrl, {
       method: 'POST',
@@ -92,14 +94,16 @@ export class DeviceAuth {
   /**
    * Check if device is set up
    */
-  isSetup(): boolean {
+  async isSetup(): Promise<boolean> {
+    await this.ensureTokensLoaded();
     return this.tokens !== null;
   }
 
   /**
    * Get device info for display purposes
    */
-  getDeviceInfo(): { deviceId: string; deviceName: string } | null {
+  async getDeviceInfo(): Promise<{ deviceId: string; deviceName: string } | null> {
+    await this.ensureTokensLoaded();
     if (!this.tokens) return null;
     return {
       deviceId: this.tokens.deviceId,
@@ -114,6 +118,15 @@ export class DeviceAuth {
     this.tokens = null;
     await this.clearStoredTokens();
     await auth.signOut();
+  }
+
+  /**
+   * Ensure tokens are loaded (lazy loading)
+   */
+  private async ensureTokensLoaded(): Promise<void> {
+    if (this.tokens === null) {
+      await this.loadTokens();
+    }
   }
 
   // Storage methods
