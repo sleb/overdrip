@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Box, Text, Newline } from "ink";
-import TextInput from "ink-text-input";
+import TextInput, { UncontrolledTextInput } from "ink-text-input";
 import Spinner from "ink-spinner";
 import { oauthSetupDevice, openBrowser, type SetupProgress, type SetupResult } from "../oauth-setup";
 import { loadAuthTokens } from "../auth";
@@ -33,10 +33,7 @@ const OAuthSetupScreen: React.FC = () => {
 
   // Load existing device info on mount
   useEffect(() => {
-    // Add brief delay for better UX
     const loadTokens = async () => {
-      await new Promise(resolve => setTimeout(resolve, 500));
-
       try {
         const tokens = await loadAuthTokens();
         if (tokens) {
@@ -183,13 +180,13 @@ const OAuthSetupScreen: React.FC = () => {
         <Text bold>Re-authenticating Device</Text>
         <Newline />
         <Text>Current device name: <Text bold color="cyan">{screenState.existingDeviceName}</Text></Text>
-        <Newline />
-        <Text>Keep this name? </Text>
-        <TextInput
-          value=""
-          onSubmit={handleExistingNameConfirm}
-          placeholder="Y/n"
-        />
+        <Box>
+          <Text>Keep this name? </Text>
+          <UncontrolledTextInput
+            onSubmit={handleExistingNameConfirm}
+            placeholder="Y/n"
+          />
+        </Box>
         <Newline />
         <Text dimColor>Press Enter to keep current name, or type 'n' to change it</Text>
       </Box>
@@ -203,15 +200,13 @@ const OAuthSetupScreen: React.FC = () => {
         <Text bold>Change Device Name</Text>
         <Newline />
         <Text>Enter new name for your device:</Text>
-        <Newline />
-        <TextInput
-          value={screenState.deviceName}
-          onChange={(value) =>
-            setScreenState(prev => ({ ...prev, deviceName: value }))
-          }
-          onSubmit={handleNewNameSubmit}
-          placeholder={screenState.existingDeviceName}
-        />
+        <Box>
+          <UncontrolledTextInput
+            initialValue={screenState.deviceName}
+            onSubmit={handleNewNameSubmit}
+            placeholder={screenState.existingDeviceName}
+          />
+        </Box>
         <Newline />
         <Text dimColor>Press Enter to confirm (or leave empty to keep current name)</Text>
       </Box>
