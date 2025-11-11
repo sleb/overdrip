@@ -1,7 +1,7 @@
 import { render } from "ink";
 import Layout from "./components/layout";
 import OAuthSetupScreen from "./components/oauth-setup-screen";
-import StartScreen from "./components/start-screen";
+import StartScreen from "./components/start-screen.tsx";
 
 export const PAGES = ["setup", "start"] as const;
 export type Page = (typeof PAGES)[number];

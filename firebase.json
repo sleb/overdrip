@@ -16,12 +16,18 @@
         "../../bun.lock",
         "src"
       ],
-      "predeploy": ["cd \"$RESOURCE_DIR\" && bun run build"]
+      "predeploy": [
+        "cd \"$RESOURCE_DIR\" && bun run build"
+      ]
     }
   ],
   "hosting": {
     "public": "packages/web/dist",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
     "rewrites": [
       {
         "source": "**",
@@ -39,6 +45,13 @@
     "ui": {
       "enabled": true,
       "port": 4000
-    }
+    },
+    "auth": {
+      "port": 9099
+    },
+    "hosting": {
+      "port": 5000
+    },
+    "singleProjectMode": true
   }
 }

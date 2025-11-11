@@ -18,6 +18,7 @@ interface BuildOptions {
  */
 function validateProductionEnv(): void {
   const required = ["GOOGLE_OAUTH_CLIENT_ID"];
+  const optional = ["GOOGLE_OAUTH_CLIENT_SECRET"];
   const missing: string[] = [];
 
   for (const envVar of required) {
@@ -31,10 +32,15 @@ function validateProductionEnv(): void {
     for (const envVar of missing) {
       console.error(`   - ${envVar}`);
     }
+    console.error("\nOptional environment variables:");
+    for (const envVar of optional) {
+      console.error(`   - ${envVar} (only needed for Web Application OAuth clients)`);
+    }
     console.error("\nPlease set these environment variables and try again.");
     console.error("Example:");
     console.error("  export GOOGLE_OAUTH_CLIENT_ID=your_client_id");
-    console.error("  bun run build:release");
+    console.error("  export GOOGLE_OAUTH_CLIENT_SECRET=your_client_secret  # Optional");
+    console.error("  bun run cli:build:release");
     process.exit(1);
   }
 
@@ -54,13 +60,14 @@ async function build(options: BuildOptions): Promise<void> {
     validateProductionEnv();
   }
 
-  // Base build command
-  const buildArgs = ["build", "src/cli.ts", "--compile", "--outfile", outFile];
+  // Base build command - use correct path when run from workspace root
+  const buildArgs = ["build", "packages/cli/src/cli.ts", "--compile", "--outfile", `packages/cli/${outFile}`];
 
   // Add environment variable definitions for production
   if (mode === "production") {
     const envVars = {
       "process.env.GOOGLE_OAUTH_CLIENT_ID": JSON.stringify(process.env.GOOGLE_OAUTH_CLIENT_ID),
+      "process.env.GOOGLE_OAUTH_CLIENT_SECRET": JSON.stringify(process.env.GOOGLE_OAUTH_CLIENT_SECRET),
       "process.env.NODE_ENV": JSON.stringify("production"),
     };
 
@@ -77,12 +84,12 @@ async function build(options: BuildOptions): Promise<void> {
     await $`bun ${buildArgs}`;
 
     console.log(`✅ Build completed successfully!`);
-    console.log(`📦 Executable created: ${outFile}`);
+    console.log(`📦 Executable created: packages/cli/${outFile}`);
 
     // Make executable (on Unix systems)
     if (process.platform !== "win32") {
-      await $`chmod +x ${outFile}`;
-      console.log(`🔧 Made executable: ${outFile}`);
+      await $`chmod +x packages/cli/${outFile}`;
+      console.log(`🔧 Made executable: packages/cli/${outFile}`);
     }
   } catch (error) {
     console.error("❌ Build failed:", error);
@@ -96,7 +103,7 @@ async function build(options: BuildOptions): Promise<void> {
 async function clean(): Promise<void> {
   console.log("🧹 Cleaning build artifacts...");
 
-  const artifacts = ["overdrip", "overdrip.exe"];
+  const artifacts = ["packages/cli/overdrip", "packages/cli/overdrip.exe"];
 
   for (const artifact of artifacts) {
     if (existsSync(artifact)) {
@@ -144,8 +151,11 @@ async function main(): Promise<void> {
       console.log("  build:release Compile executable for production (requires env vars)");
       console.log("  clean         Remove build artifacts");
       console.log("");
-      console.log("Environment Variables (required for release builds):");
-      console.log("  GOOGLE_OAUTH_CLIENT_ID  Google OAuth 2.0 Client ID");
+      console.log("Environment Variables:");
+      console.log("  For development: Create packages/cli/.env file");
+      console.log("  For production builds:");
+      console.log("    GOOGLE_OAUTH_CLIENT_ID     Google OAuth 2.0 Client ID (required)");
+      console.log("    GOOGLE_OAUTH_CLIENT_SECRET Google OAuth 2.0 Client Secret (required for your Desktop client)");
       process.exit(0);
   }
 }

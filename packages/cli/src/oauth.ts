@@ -77,20 +77,28 @@ export async function exchangeCodeForTokens(
   clientId: string,
   redirectUri: string,
   code: string,
-  codeVerifier: string
+  codeVerifier: string,
+  clientSecret?: string
 ): Promise<OAuthTokenResponse> {
+  const params: Record<string, string> = {
+    client_id: clientId,
+    code,
+    grant_type: 'authorization_code',
+    redirect_uri: redirectUri,
+    code_verifier: codeVerifier,
+  };
+
+  // Add client secret if provided (required for Web Application OAuth clients)
+  if (clientSecret) {
+    params.client_secret = clientSecret;
+  }
+
   const response = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
     },
-    body: new URLSearchParams({
-      client_id: clientId,
-      code,
-      grant_type: 'authorization_code',
-      redirect_uri: redirectUri,
-      code_verifier: codeVerifier,
-    }).toString(),
+    body: new URLSearchParams(params).toString(),
   });
 
   if (!response.ok) {

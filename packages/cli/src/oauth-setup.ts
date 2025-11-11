@@ -1,6 +1,6 @@
 import { signInWithCredential, GoogleAuthProvider } from "firebase/auth/web-extension";
-import { auth } from "@overdrip/core/firebase";
-import { FUNCTIONS_URL } from "@overdrip/core/config";
+import { auth, functions } from "@overdrip/core/firebase";
+import { httpsCallable } from "firebase/functions";
 import {
   SetupDeviceRequestSchema,
   SetupDeviceResponseSchema,
@@ -84,7 +84,8 @@ export async function oauthSetupDevice(
       config.googleOAuthClientId,
       redirectUri,
       callbackResult.code,
-      pkceChallenge.codeVerifier
+      pkceChallenge.codeVerifier,
+      config.googleOAuthClientSecret
     );
   } catch (error) {
     throw new Error(`Token exchange failed: ${error instanceof Error ? error.message : String(error)}`);
@@ -140,42 +141,26 @@ async function callSetupDeviceFunction(
   deviceName: string,
   deviceId?: string
 ): Promise<SetupDeviceResponse> {
-  // Get Firebase ID token for authentication
-  const user = auth.currentUser;
-  if (!user) {
-    throw new Error("User not authenticated");
+  // Prepare request data - only include deviceId if it has a value
+  const requestData: any = { deviceName };
+  if (deviceId) {
+    requestData.deviceId = deviceId;
   }
 
-  const idToken = await user.getIdToken();
+  // Validate the request data
+  const validatedData = SetupDeviceRequestSchema.parse(requestData);
 
-  // Prepare request data
-  const requestData = SetupDeviceRequestSchema.parse({
-    deviceName,
-    deviceId,
-  });
+  // Call the setupDevice Cloud Function
+  const setupDevice = httpsCallable(functions, 'setupDevice');
 
-  // Make authenticated request to Cloud Function
-  const response = await fetch(`${FUNCTIONS_URL}/setupDevice`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${idToken}`,
-    },
-    body: JSON.stringify({
-      data: requestData,
-    }),
-  });
-
-  const responseData = await response.json() as any;
-
-  if (!response.ok) {
-    const errorData = SetupDeviceErrorSchema.parse(responseData);
-    throw new Error(errorData.error);
+  try {
+    const result = await setupDevice(validatedData);
+    return SetupDeviceResponseSchema.parse(result.data);
+  } catch (error: any) {
+    // Handle Firebase Functions errors
+    const errorMessage = error.message || error.code || 'Unknown error';
+    throw new Error(`Setup device failed: ${errorMessage}`);
   }
-
-  // Extract result from Cloud Functions response format
-  const result = responseData.result || responseData;
-  return SetupDeviceResponseSchema.parse(result);
 }
 
 /**

@@ -2,18 +2,20 @@
  * Configuration utilities for CLI
  *
  * Environment variables are inlined at build time by Bun.
- * For development, use .env file. For production builds, variables
- * are baked into the binary with `bun build --define`.
+ * For development, use .env file in CLI package directory. For production builds,
+ * variables are baked into the binary with `bun build --define`.
  */
 
 export interface CLIConfig {
   googleOAuthClientId: string;
+  googleOAuthClientSecret?: string;
 }
 
 // At build time, Bun will inline these environment variables
-// Development: loaded from .env file
+// Development: loaded from .env file in CLI package
 // Production: inlined via --define flags during build
 const GOOGLE_OAUTH_CLIENT_ID = process.env.GOOGLE_OAUTH_CLIENT_ID;
+const GOOGLE_OAUTH_CLIENT_SECRET = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
 
 /**
  * Load configuration - validates at build time for production builds
@@ -22,13 +24,14 @@ export function loadConfig(): CLIConfig {
   if (!GOOGLE_OAUTH_CLIENT_ID) {
     throw new Error(
       'GOOGLE_OAUTH_CLIENT_ID is required. ' +
-      'For development: add to .env file. ' +
+      'For development: add to packages/cli/.env file. ' +
       'For production: build with --define GOOGLE_OAUTH_CLIENT_ID=your_client_id'
     );
   }
 
   return {
     googleOAuthClientId: GOOGLE_OAUTH_CLIENT_ID,
+    googleOAuthClientSecret: GOOGLE_OAUTH_CLIENT_SECRET || undefined,
   };
 }
 

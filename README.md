@@ -19,7 +19,7 @@ infrastructure/
 
 ## Architecture
 
-Overdrip uses a **custom token authentication flow** with registration codes:
+Overdrip uses a **direct Google OAuth authentication flow** with immediate device registration:
 
 ### 1. Device Setup (On Pi)
 
@@ -27,19 +27,14 @@ Overdrip uses a **custom token authentication flow** with registration codes:
 $ overdrip setup
 ```
 
-- CLI calls `createDevice` Cloud Function
-- Function generates device ID and custom Firebase token
-- Function generates registration code (e.g., `A3K9-PL2M`) and stores in Firestore
-- CLI authenticates with custom token and displays registration code
+- CLI prompts for device name (or asks to keep/change existing name for re-auth)
+- CLI starts local OAuth server and opens Google sign-in in browser
+- User authenticates with Google using PKCE (Proof Key for Code Exchange)
+- CLI exchanges OAuth tokens for Firebase authentication
+- CLI calls `setupDevice` Cloud Function with user authentication
+- Device is immediately registered and ready to use
 
-### 2. Device Registration (On Web)
-
-- User visits web app and signs in with Google
-- User enters registration code from Pi
-- Web app calls `registerDevice` Cloud Function
-- Function links device to user account and deletes one-time code
-
-### 3. Runtime Operations
+### 2. Runtime Operations
 
 - Pi authenticates automatically on boot using stored credentials
 - Device pushes sensor data and pulls configuration from Firestore
@@ -47,8 +42,10 @@ $ overdrip setup
 
 ### Key Features
 
-- **Server-side registration code generation** - Secure, Firebase-managed
-- **Auto-cleanup** - Scheduled function deletes expired codes daily
+- **Direct Google OAuth** - Secure PKCE flow, no client secrets needed
+- **Immediate Registration** - Devices registered instantly during setup
+- **Custom Device Names** - Users name devices during setup process
+- **Re-authentication Support** - Existing devices can re-authenticate seamlessly
 - **Monitoring** - Terraform-managed dashboards and alerts
 - **Type-safe API contracts** - Shared Zod schemas between client and server
 - **Real-time updates** - Firestore listeners for instant UI updates
@@ -104,16 +101,20 @@ terraform apply
 ## Current Status
 
 ✅ **Complete:**
-- Backend Cloud Functions (create, register, scheduled cleanup)
-- Web app with Google Sign-In, device registration, and dashboard
-- Device management (register, unregister with confirmation)
+
+- OAuth-based authentication with PKCE security
+- `setupDevice` Cloud Function with user authentication
+- CLI with React-based UI and standalone executable compilation
+- Web app with Google Sign-In and device dashboard
+- Device management (unregister with confirmation)
 - Shared type-safe schemas (Zod)
-- Firestore security rules (Cloud Functions-only write access)
+- Firestore security rules
 - Monitoring infrastructure (Terraform-managed metrics, dashboards, alerts)
 
 🔄 **In Progress:**
-- CLI credential loading and session restoration
+
 - Pi runtime operations (sensor data push/pull)
+- Device status reporting and heartbeat system
 
 ## Tech Stack
 
@@ -134,14 +135,11 @@ terraform apply
 ## Firestore Structure
 
 ```
-/registration-codes/{code}
-  deviceId: string
-  createdAt: timestamp  # Auto-deleted after 24h by scheduled function
-
 /users/{userId}/devices/{deviceId}
   name: string
-  code: string
-  registeredAt: timestamp
+  registeredAt: timestamp    # Only set for new devices
+  lastSetup: timestamp       # Updated on each re-authentication
+  setupMethod: "google_oauth"
 
 /devices/{deviceId}
   lastSeen: timestamp

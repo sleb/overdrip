@@ -8,9 +8,9 @@
     "@types/bun": "latest"
   },
   "scripts": {
-    "cli:dev": "cd packages/cli && bun run dev",
-    "cli:build": "cd packages/cli && bun run build",
-    "cli:build:release": "cd packages/cli && bun run build:release",
-    "cli:clean": "cd packages/cli && bun run clean"
+    "cli:dev": "cd packages/cli && bun src/cli.ts",
+    "cli:build": "bun packages/cli/build.ts build",
+    "cli:build:release": "bun packages/cli/build.ts build:release",
+    "cli:clean": "bun packages/cli/build.ts clean"
   }
 }

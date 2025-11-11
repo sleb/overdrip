@@ -17,10 +17,11 @@
   },
   "type": "module",
   "scripts": {
-    "dev": "bun run src/cli.ts",
-    "build": "bun run build.ts build",
-    "build:release": "bun run build.ts build:release",
-    "clean": "bun run build.ts clean",
-    "test": "echo 'Tests coming soon'"
+    "dev": "cd ../.. && bun packages/cli/src/cli.ts",
+    "build": "cd ../.. && bun packages/cli/build.ts build",
+    "build:release": "cd ../.. && bun packages/cli/build.ts build:release",
+    "clean": "cd ../.. && bun packages/cli/build.ts clean",
+    "test": "cd ../.. && bun packages/cli/test-oauth.ts",
+    "test:real-oauth": "cd ../.. && bun packages/cli/test-real-oauth.ts"
   }
 }

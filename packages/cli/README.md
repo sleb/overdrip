@@ -7,22 +7,22 @@ Command-line interface for setting up and managing Overdrip plant watering devic
 **Development:**
 
 ```bash
-cd packages/cli
+# From workspace root
 bun install
-bun run dev setup
+bun run cli:dev setup
 ```
 
 **Production Build:**
 
 ```bash
-# Set required environment variables
+# From workspace root - Set required environment variables
 export GOOGLE_OAUTH_CLIENT_ID=your_google_client_id
 
 # Build standalone executable
-bun run build:release
+bun run cli:build:release
 
 # Run the executable
-./overdrip setup
+cd packages/cli && ./overdrip setup
 ```
 
 ## Commands
@@ -68,21 +68,64 @@ overdrip start
 2. Authenticates with Firebase using custom token
 3. Begins device runtime operations (TODO: implementation)
 
+## OAuth Setup
+
+Before using the CLI, you need to configure Google OAuth credentials. This is a one-time setup.
+
+### Step 1: Google Cloud Console Setup
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com)
+2. Select your Firebase project: **overdrip-ed767**
+3. Navigate to **APIs & Services > Credentials**
+4. Click **+ CREATE CREDENTIALS > OAuth 2.0 Client IDs**
+
+Configure the OAuth client:
+- **Application type**: `Desktop application`
+- **Name**: `Overdrip CLI`
+- **Authorized redirect URIs**:
+  ```
+  http://localhost:8080/callback
+  http://localhost:8081/callback
+  http://localhost:8082/callback
+  http://localhost:8083/callback
+  http://localhost:8084/callback
+  ```
+
+5. Click **CREATE** and copy the **Client ID** (ignore Client Secret - not needed)
+
+### Step 2: CLI Configuration
+
+Create `.env` file in the CLI package directory:
+
+```bash
+# packages/cli/.env
+GOOGLE_OAUTH_CLIENT_ID=your-client-id.apps.googleusercontent.com
+GOOGLE_OAUTH_CLIENT_SECRET=your-client-secret  # Required for your Desktop client
+```
+
+**Important**: Your specific Desktop application OAuth client requires both client ID and client secret, even though many Desktop apps only need PKCE. This is a valid Google configuration.
+
+### Step 3: Test Setup
+
+Run the CLI setup command to test your OAuth configuration:
+
+```bash
+# From workspace root
+bun run cli:build
+cd packages/cli && ./overdrip setup
+```
+
 ## Build System
 
 The CLI uses Bun's compile feature to create standalone executables with environment variable inlining for production builds.
 
 ### Development Builds
 
-Use `.env` file for configuration:
+Use `.env` file in CLI package directory for configuration:
 
 ```bash
-# .env
-GOOGLE_OAUTH_CLIENT_ID=your_google_client_id.googleusercontent.com
-```
-
-```bash
-bun run build          # Compile executable for development
+# From workspace root
+bun run cli:build      # Compile executable for development
 ```
 
 ### Production Builds
@@ -90,17 +133,20 @@ bun run build          # Compile executable for development
 Environment variables are inlined at build time:
 
 ```bash
+# From workspace root
 export GOOGLE_OAUTH_CLIENT_ID=your_google_client_id.googleusercontent.com
-bun run build:release  # Compile executable with inlined env vars
+export GOOGLE_OAUTH_CLIENT_SECRET=your_client_secret
+bun run cli:build:release  # Compile executable with inlined env vars
 ```
 
 ### Build Commands
 
 ```bash
-bun run dev           # Run CLI directly (development)
-bun run build         # Compile executable (development)
-bun run build:release # Compile executable (production, requires env vars)
-bun run clean         # Remove build artifacts
+# All commands run from workspace root
+bun run cli:dev           # Run CLI directly (development)
+bun run cli:build         # Compile executable (development)
+bun run cli:build:release # Compile executable (production, requires env vars)
+bun run cli:clean         # Remove build artifacts
 ```
 
 ### Custom Build Script
@@ -130,7 +176,7 @@ The CLI includes a custom build script (`build.ts`) that:
 - **clerc** - Command-line argument parsing
 - **Ink** - React-based terminal UI components
 - **@overdrip/core** - Shared Firebase config and schemas
-- **PKCE OAuth** - Secure authorization without client secrets
+- **PKCE + Client Secret OAuth** - Desktop application OAuth with enhanced security
 
 ## Stored Data
 
@@ -171,18 +217,19 @@ src/
 ### Running Locally
 
 ```bash
-# Development with .env file
-bun run dev setup
+# From workspace root - Development with .env file
+bun run cli:dev setup
 
-# Direct execution
-bun run src/cli.ts setup
+# Direct execution from workspace root
+bun packages/cli/src/cli.ts setup
 ```
 
 ### Environment Setup
 
-1. Create `.env` file:
+1. Create `.env` file in CLI package directory (`packages/cli/.env`):
    ```bash
    GOOGLE_OAUTH_CLIENT_ID=your_google_client_id.googleusercontent.com
+   GOOGLE_OAUTH_CLIENT_SECRET=your_client_secret
    ```
 
 2. Set up Google OAuth in Google Cloud Console:
@@ -191,11 +238,20 @@ bun run src/cli.ts setup
 
 ### Testing OAuth Flow
 
+Test the OAuth setup by running the actual CLI setup command:
+
+```bash
+# From workspace root
+bun run cli:build
+cd packages/cli && ./overdrip setup
+```
+
 The OAuth flow requires:
 - Interactive terminal (raw mode support)
 - Network access to Google OAuth endpoints
 - Available port on localhost (8080+ range)
 - Default browser available for opening OAuth URL
+- GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET set in packages/cli/.env file
 
 ## Current Status
 
@@ -247,8 +303,13 @@ The OAuth flow requires:
 ### Common Issues
 
 **"Configuration error: GOOGLE_OAUTH_CLIENT_ID is required"**
-- For development: Add to `.env` file
-- For production: Set environment variable before building
+- For development: Add to `packages/cli/.env` file
+- For production: Set environment variables before building
+
+**"Token exchange failed: invalid_request"**
+- Your Desktop OAuth client requires a client secret
+- Add `GOOGLE_OAUTH_CLIENT_SECRET` to your `.env` file
+- This is normal for some Desktop application configurations
 
 **"OAuth flow failed: Token exchange failed"**
 - Check Google OAuth client configuration
