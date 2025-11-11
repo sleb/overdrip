@@ -11,6 +11,10 @@
     "cli:dev": "cd packages/cli && bun src/cli.ts",
     "cli:build": "bun packages/cli/build.ts build",
     "cli:build:release": "bun packages/cli/build.ts build:release",
-    "cli:clean": "bun packages/cli/build.ts clean"
+    "cli:clean": "bun packages/cli/build.ts clean",
+    "test": "bun test packages/core/src/__tests__ packages/functions/src/__tests__ packages/cli/src/__tests__",
+    "test:core": "bun test packages/core/src/__tests__",
+    "test:functions": "bun test packages/functions/src/__tests__",
+    "test:cli": "bun test packages/cli/src/__tests__"
   }
 }

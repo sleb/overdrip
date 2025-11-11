@@ -13,7 +13,7 @@ export const SetupDeviceRequestSchema = z.object({
 
 export const SetupDeviceResponseSchema = z.object({
   deviceId: z.string().uuid(),
-  authCode: z.string().length(64), // 32 bytes hex = 64 chars
+  authCode: z.string().length(64).regex(/^[0-9a-f]+$/), // 32 bytes hex = 64 chars
 });
 
 export const SetupDeviceErrorSchema = z.object({
@@ -22,12 +22,12 @@ export const SetupDeviceErrorSchema = z.object({
 
 // refreshDeviceToken endpoint - unauthenticated HTTP endpoint
 export const RefreshTokenRequestSchema = z.object({
-  authCode: z.string().length(64),
+  authCode: z.string().length(64).regex(/^[0-9a-f]+$/),
   deviceId: z.string().uuid(),
 });
 
 export const RefreshTokenResponseSchema = z.object({
-  customToken: z.string(),
+  customToken: z.string().min(1),
 });
 
 export const RefreshTokenErrorSchema = z.object({
@@ -60,9 +60,9 @@ export const ListAuthCodesResponseSchema = z.object({
 
 // Client-side auth storage schema
 export const ClientAuthTokensSchema = z.object({
-  authCode: z.string().length(64),
+  authCode: z.string().length(64).regex(/^[0-9a-f]+$/),
   deviceId: z.string().uuid(),
-  deviceName: z.string(),
+  deviceName: z.string().min(1),
 });
 
 // Type exports

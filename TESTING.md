@@ -1,0 +1,184 @@
+# Testing Guide
+
+This document outlines the testing strategy for the Overdrip hybrid authentication system.
+
+## Test Philosophy
+
+We follow a **targeted testing approach** - focusing on the most critical business logic rather than comprehensive coverage. Tests are designed to catch regressions in core functionality while remaining maintainable and fast (~27ms execution).
+
+## Test Structure
+
+```
+packages/
+├── core/src/__tests__/
+│   └── schemas.test.ts          # Schema validation tests
+├── functions/src/__tests__/
+│   └── auth-code-manager.test.ts # Core auth logic tests
+└── cli/src/__tests__/
+    ├── oauth.test.ts            # OAuth PKCE & security tests
+    └── config.test.ts           # Configuration validation tests
+```
+
+## What We Test
+
+### ✅ **Core Business Logic**
+
+- **Auth Code Generation**: Cryptographic security, uniqueness, format
+- **Schema Validation**: Input validation for all API contracts
+- **PKCE Implementation**: OAuth security with SHA256 challenges
+- **Configuration Management**: Environment variable validation
+- **ID Token Parsing**: JWT structure and security validation
+- **Expiration Logic**: Date calculations and validation
+
+### ✅ **Critical Security Validations**
+
+- Auth code format (64-character hex strings)
+- Device ID UUID validation
+- Token expiration calculations
+- Custom token claim structure
+- PKCE cryptographic randomness and format
+- OAuth URL parameter validation
+- Base64URL encoding correctness
+
+### ❌ **What We Don't Test**
+
+- Firebase integration (tested via real deployment)
+- UI components (tested manually)
+- Network requests (tested via integration)
+- Complex mocking scenarios
+
+## Running Tests
+
+```bash
+# Run all tests
+bun run test
+
+# Run specific test suites
+bun run test:core      # Schema validation tests
+bun run test:functions # Auth logic tests
+bun run test:cli       # CLI utilities tests
+```
+
+## Test Categories
+
+### Schema Tests (`packages/core/src/__tests__/schemas.test.ts`)
+
+Tests the Zod schema validation for all API contracts:
+
+- ✅ Valid data passes validation
+- ✅ Invalid formats are rejected
+- ✅ Edge cases (empty strings, wrong lengths, invalid UUIDs)
+
+**Coverage**: All critical schemas used in the auth flow.
+
+### Auth Logic Tests (`packages/functions/src/__tests__/auth-code-manager.test.ts`)
+
+Tests core authentication business logic:
+
+- ✅ Auth code generation (crypto randomness, format)
+- ✅ Expiration calculations (1 year from creation)
+- ✅ Validation logic (expiry, device matching)
+- ✅ Token claim structure
+
+**Coverage**: Pure functions and critical algorithms.
+
+### OAuth Tests (`packages/cli/src/__tests__/oauth.test.ts`)
+
+Tests OAuth security and PKCE implementation:
+
+- ✅ PKCE generation (crypto randomness, base64url format, SHA256)
+- ✅ OAuth URL building (parameter encoding, validation)
+- ✅ ID token parsing (JWT structure, base64 padding, error handling)
+- ✅ Security properties (entropy, uniqueness, standards compliance)
+
+**Coverage**: Security-critical OAuth flow components.
+
+### Configuration Tests (`packages/cli/src/__tests__/config.test.ts`)
+
+Tests environment variable handling and validation:
+
+- ✅ Required field validation (helpful error messages)
+- ✅ Optional field handling (undefined vs provided)
+- ✅ Error reporting (development vs production guidance)
+- ✅ Safe configuration loading (non-throwing variants)
+
+**Coverage**: Configuration validation and error handling.
+
+## Test Results
+
+All tests should pass:
+
+```bash
+$ bun run test
+ 64 pass
+ 0 fail
+ 140 expect() calls
+Ran 64 tests across 4 files. [~27ms]
+```
+
+## Testing Strategy Rationale
+
+### Why Targeted Testing?
+
+1. **High Value**: Focus on code that, if broken, would break the entire system
+2. **Low Maintenance**: Avoid brittle tests that break on minor changes
+3. **Fast Feedback**: Tests run in ~27ms, encouraging frequent execution
+4. **Clear Intent**: Each test validates a specific business rule
+5. **Security Focus**: Extensive coverage of crypto and auth logic
+
+### What About Integration Testing?
+
+Integration testing happens through:
+
+- **Manual CLI testing**: Real OAuth flows with actual Cloud Functions
+- **Deployment verification**: Functions deployed and tested with real data
+- **End-to-end validation**: Complete setup → start → authentication flows
+
+### Firebase Testing
+
+We don't mock Firebase extensively because:
+
+- Firebase Admin SDK has its own test coverage
+- Real deployment testing catches integration issues better
+- Complex mocking often tests the mocks, not the code
+- The business logic (our focus) is separate from Firebase calls
+
+## Adding New Tests
+
+When adding tests, ask:
+
+1. **Is this core business logic?** (Algorithm, validation, calculation)
+2. **Would this break the system if it failed?** (Auth, security, data integrity)
+3. **Can it be tested without complex mocking?** (Pure functions preferred)
+
+If yes to all three, add a focused test. If not, rely on integration testing.
+
+## Debugging Test Failures
+
+Common issues:
+
+```bash
+# Schema validation failing
+Expected substring: "Invalid auth code"
+Received message: "String must contain exactly 64 character(s)"
+```
+
+→ Check that test data matches schema expectations (64-char hex, valid UUIDs)
+
+```bash
+# Async issues
+error: expect(received).toThrow(expected)
+Received function did not throw
+```
+
+→ Ensure async functions use `await` in test assertions
+
+## Continuous Integration
+
+Tests run automatically on:
+
+- Pre-commit hooks (if configured)
+- Before deployment
+- In CI/CD pipeline (if configured)
+
+Fast execution (~27ms) makes this practical for frequent validation.
