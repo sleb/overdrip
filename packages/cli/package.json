@@ -5,7 +5,7 @@
   "dependencies": {
     "@overdrip/core": "workspace:*",
     "clerc": "^0.44.0",
-    "ink": "^6.3.1",
+    "ink": "^6.4.0",
     "ink-big-text": "^2.0.0",
     "ink-gradient": "^3.0.0",
     "ink-spinner": "^5.0.0",
