@@ -4,6 +4,9 @@ import {
   RegisterDeviceRequestSchema,
   type RegisterDeviceResponse,
   RegisterDeviceResponseSchema,
+  SetupDeviceRequestSchema,
+  type SetupDeviceResponse,
+  SetupDeviceResponseSchema,
 } from "@overdrip/core/schemas";
 import { initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
@@ -180,5 +183,84 @@ export const cleanupExpiredCodes = onSchedule("0 3 * * *", async () => {
       success: false,
     });
     throw e;
+  }
+});
+
+/**
+ * New setup device function that works with authenticated users
+ * Replaces the createDevice flow with direct Google OAuth integration
+ */
+export const setupDevice = onCall(async (req) => {
+  const userId = req.auth?.uid;
+  if (!userId) {
+    throw new HttpsError("unauthenticated", "User must be authenticated");
+  }
+
+  // Validate request data
+  const validationResult = SetupDeviceRequestSchema.safeParse(req.data);
+  if (!validationResult.success) {
+    throw new HttpsError("invalid-argument", "Invalid request data");
+  }
+
+  const { deviceName, deviceId: providedDeviceId } = validationResult.data;
+
+  try {
+    const db = getFirestore();
+    const auth = getAuth();
+
+    // Generate or validate device ID
+    let deviceId: string;
+    if (providedDeviceId) {
+      // Re-authentication case - validate device exists and belongs to user
+      const deviceDoc = await db
+        .collection("users")
+        .doc(userId)
+        .collection("devices")
+        .doc(providedDeviceId)
+        .get();
+
+      if (!deviceDoc.exists) {
+        throw new HttpsError("not-found", "Device not found");
+      }
+
+      deviceId = providedDeviceId;
+    } else {
+      // New device case
+      deviceId = crypto.randomUUID();
+    }
+
+    // Create custom token for the device
+    const customToken = await auth.createCustomToken(deviceId);
+
+    // Store/update device registration
+    await db
+      .collection("users")
+      .doc(userId)
+      .collection("devices")
+      .doc(deviceId)
+      .set(
+        {
+          name: deviceName,
+          registeredAt: providedDeviceId ? undefined : new Date(), // Only set on new devices
+          lastSetup: new Date(),
+          setupMethod: "google_oauth",
+        },
+        { merge: true }
+      );
+
+    const response: SetupDeviceResponse = {
+      deviceId,
+      customToken,
+    };
+
+    // Validate response against schema before returning
+    return SetupDeviceResponseSchema.parse(response);
+  } catch (err) {
+    if (err instanceof HttpsError) {
+      throw err;
+    }
+
+    error("Error setting up device:", { error: err instanceof Error ? err.message : String(err), userId });
+    throw new HttpsError("internal", "Failed to setup device");
   }
 });
