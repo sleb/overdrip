@@ -10,44 +10,6 @@ describe("AuthCodeManager Logic", () => {
       expect(authCode).toHaveLength(64);
       expect(authCode).toMatch(/^[0-9a-f]+$/); // hex chars only
     });
-
-    test("should generate unique codes", () => {
-      const code1 = crypto.randomBytes(32).toString('hex');
-      const code2 = crypto.randomBytes(32).toString('hex');
-
-      expect(code1).not.toBe(code2);
-    });
-  });
-
-  describe("Auth Code Validation Logic", () => {
-    test("should validate expiration correctly", () => {
-      const now = new Date();
-      const futureDate = new Date(Date.now() + 86400000); // 1 day future
-      const pastDate = new Date(Date.now() - 86400000); // 1 day past
-
-      expect(futureDate > now).toBe(true);
-      expect(pastDate < now).toBe(true);
-    });
-
-    test("should validate device ID matching", () => {
-      const deviceId1 = "device123";
-      const deviceId2 = "device456";
-
-      expect(deviceId1 === deviceId1).toBe(true);
-      expect(deviceId1 === deviceId2).toBe(false);
-    });
-  });
-
-  describe("Expiration Calculation", () => {
-    test("should calculate 1 year expiration correctly", () => {
-      const now = Date.now();
-      const oneYear = 365 * 24 * 60 * 60 * 1000;
-      const expirationDate = new Date(now + oneYear);
-
-      // Should be approximately 1 year from now
-      expect(expirationDate.getTime()).toBeGreaterThan(now + oneYear - 1000);
-      expect(expirationDate.getTime()).toBeLessThan(now + oneYear + 1000);
-    });
   });
 
   describe("Custom Token Claims Structure", () => {

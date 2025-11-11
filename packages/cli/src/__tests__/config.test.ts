@@ -83,15 +83,7 @@ describe("Configuration", () => {
     test("should throw when required GOOGLE_OAUTH_CLIENT_ID is missing", () => {
       const { loadConfig } = createMockConfig({});
 
-      expect(() => loadConfig()).toThrow();
-
-      try {
-        loadConfig();
-        fail("Expected error to be thrown");
-      } catch (error) {
-        expect(error instanceof Error).toBe(true);
-        expect((error as Error).message).toContain("GOOGLE_OAUTH_CLIENT_ID is required");
-      }
+      expect(() => loadConfig()).toThrow("GOOGLE_OAUTH_CLIENT_ID is required");
     });
 
     test("should handle empty string as missing value", () => {
@@ -131,32 +123,18 @@ describe("Configuration", () => {
     test("should provide helpful error message for missing client ID", () => {
       const { loadConfig } = createMockConfig({});
 
-      try {
-        loadConfig();
-        fail("Expected error to be thrown");
-      } catch (error) {
-        const message = (error as Error).message;
-
-        expect(message).toContain("GOOGLE_OAUTH_CLIENT_ID is required");
-        expect(message).toContain("For development: add to packages/cli/.env file");
-        expect(message).toContain("For production: build with --define");
-      }
+      expect(() => loadConfig()).toThrow(/GOOGLE_OAUTH_CLIENT_ID is required/);
+      expect(() => loadConfig()).toThrow(/For development: add to packages\/cli\/\.env file/);
+      expect(() => loadConfig()).toThrow(/For production: build with --define/);
     });
 
     test("should include both development and production guidance", () => {
       const { loadConfig } = createMockConfig({});
 
-      try {
-        loadConfig();
-      } catch (error) {
-        const message = (error as Error).message;
-
-        // Should guide both dev and prod workflows
-        expect(message).toContain("development");
-        expect(message).toContain("production");
-        expect(message).toContain(".env file");
-        expect(message).toContain("--define");
-      }
+      expect(() => loadConfig()).toThrow(/development/);
+      expect(() => loadConfig()).toThrow(/production/);
+      expect(() => loadConfig()).toThrow(/\.env file/);
+      expect(() => loadConfig()).toThrow(/--define/);
     });
   });
 
@@ -188,17 +166,13 @@ describe("Configuration", () => {
         errorMessage = message;
       };
 
-      try {
-        validateConfig();
-        fail("Expected process.exit to be called");
-      } catch (error) {
-        expect(exitCode).toBe(1);
-        expect(errorMessage).toContain("Configuration error:");
-      } finally {
-        // Restore mocks
-        process.exit = originalExit;
-        console.error = originalConsoleError;
-      }
+      expect(() => validateConfig()).toThrow("process.exit called with code 1");
+      expect(exitCode).toBe(1);
+      expect(errorMessage).toContain("Configuration error:");
+
+      // Restore mocks
+      process.exit = originalExit;
+      console.error = originalConsoleError;
     });
 
     test("should log configuration error to console", () => {
@@ -215,11 +189,7 @@ describe("Configuration", () => {
         loggedMessage = message + (args.length > 0 ? ' ' + args.join(' ') : '');
       };
 
-      try {
-        validateConfig();
-      } catch {
-        // Expected to throw due to mocked process.exit
-      }
+      expect(() => validateConfig()).toThrow("process.exit called");
 
       expect(loggedMessage).toContain("Configuration error:");
       expect(loggedMessage).toContain("GOOGLE_OAUTH_CLIENT_ID is required");
@@ -359,17 +329,11 @@ describe("Configuration", () => {
     test("should provide appropriate error messages for both contexts", () => {
       const { loadConfig } = createMockConfig({});
 
-      try {
-        loadConfig();
-      } catch (error) {
-        const message = (error as Error).message;
-
-        // Should mention both development (.env) and production (--define) contexts
-        expect(message).toContain("development");
-        expect(message).toContain("production");
-        expect(message).toContain("packages/cli/.env");
-        expect(message).toContain("--define");
-      }
+      // Should mention both development (.env) and production (--define) contexts
+      expect(() => loadConfig()).toThrow(/development/);
+      expect(() => loadConfig()).toThrow(/production/);
+      expect(() => loadConfig()).toThrow(/packages\/cli\/\.env/);
+      expect(() => loadConfig()).toThrow(/--define/);
     });
   });
 });

@@ -4,7 +4,7 @@ This document outlines the testing strategy for the Overdrip hybrid authenticati
 
 ## Test Philosophy
 
-We follow a **targeted testing approach** - focusing on the most critical business logic rather than comprehensive coverage. Tests are designed to catch regressions in core functionality while remaining maintainable and fast (~27ms execution).
+We follow a **targeted testing approach** - focusing on the most critical business logic rather than comprehensive coverage. Tests are designed to catch regressions in core functionality while remaining maintainable and fast (~33ms execution). We avoid testing built-in language features, crypto libraries, or trivial operations.
 
 ## Test Structure
 
@@ -23,29 +23,29 @@ packages/
 
 ### ✅ **Core Business Logic**
 
-- **Auth Code Generation**: Cryptographic security, uniqueness, format
 - **Schema Validation**: Input validation for all API contracts
-- **PKCE Implementation**: OAuth security with SHA256 challenges
-- **Configuration Management**: Environment variable validation
-- **ID Token Parsing**: JWT structure and security validation
-- **Expiration Logic**: Date calculations and validation
+- **PKCE Implementation**: OAuth security standards compliance
+- **Configuration Management**: Environment variable validation and error handling
+- **ID Token Parsing**: JWT structure validation and error cases
+- **Auth Code Format**: Business requirements for security tokens
 
 ### ✅ **Critical Security Validations**
 
-- Auth code format (64-character hex strings)
+- Auth code format validation (64-character hex strings)
 - Device ID UUID validation
-- Token expiration calculations
 - Custom token claim structure
-- PKCE cryptographic randomness and format
-- OAuth URL parameter validation
-- Base64URL encoding correctness
+- PKCE standards compliance (RFC 7636)
+- OAuth URL parameter encoding
+- Base64URL format requirements
 
 ### ❌ **What We Don't Test**
 
+- Built-in crypto functions (`crypto.randomBytes`, etc.)
+- JavaScript language features (`===`, `>`, `<`, etc.)
+- Math operations (date arithmetic, number comparisons)
 - Firebase integration (tested via real deployment)
 - UI components (tested manually)
 - Network requests (tested via integration)
-- Complex mocking scenarios
 
 ## Running Tests
 
@@ -86,10 +86,10 @@ Tests core authentication business logic:
 
 Tests OAuth security and PKCE implementation:
 
-- ✅ PKCE generation (crypto randomness, base64url format, SHA256)
+- ✅ PKCE generation (format validation, SHA256 challenge creation)
 - ✅ OAuth URL building (parameter encoding, validation)
 - ✅ ID token parsing (JWT structure, base64 padding, error handling)
-- ✅ Security properties (entropy, uniqueness, standards compliance)
+- ✅ PKCE standards compliance (RFC 7636 requirements)
 
 **Coverage**: Security-critical OAuth flow components.
 
@@ -110,10 +110,10 @@ All tests should pass:
 
 ```bash
 $ bun run test
- 64 pass
+ 56 pass
  0 fail
- 140 expect() calls
-Ran 64 tests across 4 files. [~27ms]
+ 128 expect() calls
+Ran 56 tests across 4 files. [~33ms]
 ```
 
 ## Testing Strategy Rationale
@@ -122,9 +122,10 @@ Ran 64 tests across 4 files. [~27ms]
 
 1. **High Value**: Focus on code that, if broken, would break the entire system
 2. **Low Maintenance**: Avoid brittle tests that break on minor changes
-3. **Fast Feedback**: Tests run in ~27ms, encouraging frequent execution
+3. **Fast Feedback**: Tests run in ~33ms, encouraging frequent execution
 4. **Clear Intent**: Each test validates a specific business rule
-5. **Security Focus**: Extensive coverage of crypto and auth logic
+5. **Security Focus**: Standards compliance and validation logic
+6. **No Trivial Tests**: Don't test built-in functions or language features
 
 ### What About Integration Testing?
 
@@ -181,4 +182,4 @@ Tests run automatically on:
 - Before deployment
 - In CI/CD pipeline (if configured)
 
-Fast execution (~27ms) makes this practical for frequent validation.
+Fast execution (~33ms) makes this practical for frequent validation.
