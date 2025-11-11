@@ -9,6 +9,7 @@ type SetupState =
   | "loading_existing"
   | "input_device_name"
   | "confirm_existing_name"
+  | "input_new_name"
   | "setting_up"
   | "complete"
   | "error";
@@ -32,8 +33,12 @@ const OAuthSetupScreen: React.FC = () => {
 
   // Load existing device info on mount
   useEffect(() => {
-    loadAuthTokens()
-      .then((tokens) => {
+    // Add brief delay for better UX
+    const loadTokens = async () => {
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      try {
+        const tokens = await loadAuthTokens();
         if (tokens) {
           // Existing device - ask about name
           setScreenState({
@@ -48,14 +53,16 @@ const OAuthSetupScreen: React.FC = () => {
             deviceName: "Plant Monitor",
           });
         }
-      })
-      .catch(() => {
+      } catch {
         // Error loading tokens, treat as new device
         setScreenState({
           state: "input_device_name",
           deviceName: "Plant Monitor",
         });
-      });
+      }
+    };
+
+    loadTokens();
   }, []);
 
   // Handle device name input submission
@@ -67,10 +74,26 @@ const OAuthSetupScreen: React.FC = () => {
   }, []);
 
   // Handle existing device name confirmation
-  const handleExistingNameConfirm = useCallback((keepExisting: boolean) => {
-    const finalName = keepExisting ? screenState.existingDeviceName! : screenState.deviceName;
+  const handleExistingNameConfirm = useCallback((input: string) => {
+    const trimmed = input.trim().toLowerCase();
+    if (trimmed === 'n' || trimmed === 'no') {
+      // User wants to change name - show input
+      setScreenState(prev => ({
+        ...prev,
+        state: "input_new_name",
+        deviceName: prev.existingDeviceName!, // Reset to current name as default
+      }));
+    } else {
+      // User wants to keep existing name (y, yes, or just Enter)
+      startSetup(screenState.existingDeviceName!);
+    }
+  }, [screenState.existingDeviceName]);
+
+  // Handle new device name input (for changing existing device name)
+  const handleNewNameSubmit = useCallback((name: string) => {
+    const finalName = name.trim() || screenState.existingDeviceName!;
     startSetup(finalName);
-  }, [screenState.deviceName, screenState.existingDeviceName]);
+  }, [screenState.existingDeviceName]);
 
   // Start the OAuth setup process
   const startSetup = useCallback((deviceName: string) => {
@@ -159,21 +182,38 @@ const OAuthSetupScreen: React.FC = () => {
       <Box flexDirection="column">
         <Text bold>Re-authenticating Device</Text>
         <Newline />
-        <Text>Current device name: <Text bold>{screenState.existingDeviceName}</Text></Text>
+        <Text>Current device name: <Text bold color="cyan">{screenState.existingDeviceName}</Text></Text>
         <Newline />
-        <Text>Keep this name? (Y/n)</Text>
+        <Text>Keep this name? </Text>
+        <TextInput
+          value=""
+          onSubmit={handleExistingNameConfirm}
+          placeholder="Y/n"
+        />
         <Newline />
-        <Text>New name (optional):</Text>
+        <Text dimColor>Press Enter to keep current name, or type 'n' to change it</Text>
+      </Box>
+    );
+  }
+
+  // Render new device name input (for changing existing device name)
+  if (screenState.state === "input_new_name") {
+    return (
+      <Box flexDirection="column">
+        <Text bold>Change Device Name</Text>
+        <Newline />
+        <Text>Enter new name for your device:</Text>
+        <Newline />
         <TextInput
           value={screenState.deviceName}
           onChange={(value) =>
             setScreenState(prev => ({ ...prev, deviceName: value }))
           }
-          onSubmit={(value) => handleExistingNameConfirm(!value.trim())}
+          onSubmit={handleNewNameSubmit}
           placeholder={screenState.existingDeviceName}
         />
         <Newline />
-        <Text dimColor>Press Enter to keep existing name, or type new name and press Enter</Text>
+        <Text dimColor>Press Enter to confirm (or leave empty to keep current name)</Text>
       </Box>
     );
   }

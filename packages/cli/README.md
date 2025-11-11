@@ -36,19 +36,35 @@ overdrip setup
 ```
 
 **What it does:**
-1. Prompts for device name (or asks to keep/change existing name for re-auth)
-2. Starts local OAuth server and opens Google sign-in in browser
-3. Handles OAuth callback with PKCE security
-4. Exchanges Google ID token for Firebase authentication
-5. Calls `setupDevice` Cloud Function with user authentication
-6. Stores device credentials locally at `~/.overdrip/auth.json`
-7. Device is immediately registered and ready to use
+1. Checks for existing device credentials
+2. For existing devices: asks to confirm current name or change it
+3. For new devices: prompts for device name
+4. Starts local OAuth server and opens Google sign-in in browser
+5. Handles OAuth callback with PKCE security
+6. Exchanges Google ID token for Firebase authentication
+7. Calls `setupDevice` Cloud Function with user authentication
+8. Stores device credentials locally at `~/.overdrip/auth.json`
+9. Device is immediately registered and ready to use
 
-**Example flow:**
+**Example flows:**
+
+*New device:*
 ```
 Device Setup
 Enter a name for your device (default: Plant Monitor):
 > My Garden Sensor
+
+Setting up device: My Garden Sensor
+✓ Opened browser for authentication
+⠋ Waiting for Google authentication...
+```
+
+*Existing device:*
+```
+Re-authenticating Device
+Current device name: My Garden Sensor
+Keep this name? Y/n
+> [Enter to keep, or 'n' to change]
 
 Setting up device: My Garden Sensor
 ✓ Opened browser for authentication
