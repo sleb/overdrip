@@ -1,16 +1,15 @@
-import crypto from "node:crypto";
 import {
-  SetupDeviceRequestSchema,
-  type SetupDeviceResponse,
   RefreshTokenRequestSchema,
+  SetupDeviceRequestSchema,
   type RefreshTokenResponse,
+  type SetupDeviceResponse,
 } from "@overdrip/core/schemas";
 import { initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { error, info } from "firebase-functions/logger";
-import { HttpsError, onCall } from "firebase-functions/v2/https";
-import { onRequest } from "firebase-functions/v2/https";
-import { AuthCodeManager } from "./auth-code-manager";
+import { HttpsError, onCall, onRequest } from "firebase-functions/v2/https";
+import crypto from "node:crypto";
+import { AuthCodeManager, createAuthCodePrefix } from "./auth-code-manager";
 
 initializeApp();
 
@@ -122,7 +121,7 @@ export const refreshDeviceToken = onRequest(
       }
 
       const { authCode, deviceId } = validationResult.data;
-      const authCodePrefix = authCode.substring(0, 8) + "...";
+      const authCodePrefix = createAuthCodePrefix(authCode) + "...";
 
       // Validate auth code and get user data
       const { userId, deviceName } = await authCodeManager.validateAuthCode(authCode, deviceId);
@@ -132,7 +131,7 @@ export const refreshDeviceToken = onRequest(
         deviceId,
         userId,
         deviceName,
-        authCode.substring(0, 8)
+        createAuthCodePrefix(authCode)
       );
 
       // Update last used timestamp
@@ -154,8 +153,8 @@ export const refreshDeviceToken = onRequest(
 
       // Log appropriate level based on error type
       if (errorMessage.includes('Invalid auth code') ||
-          errorMessage.includes('expired') ||
-          errorMessage.includes('mismatch')) {
+        errorMessage.includes('expired') ||
+        errorMessage.includes('mismatch')) {
         info(`Token refresh failed - ${errorMessage}`, {
           authCodePrefix,
           deviceId: req.body?.deviceId

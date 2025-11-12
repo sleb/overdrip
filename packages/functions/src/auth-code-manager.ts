@@ -1,6 +1,56 @@
-import crypto from "node:crypto";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
+import crypto from "node:crypto";
+
+/**
+ * Pure utility functions for auth code management
+ */
+
+/**
+ * Generate a cryptographically secure auth code (64 hex characters)
+ */
+export function generateAuthCode(): string {
+  return crypto.randomBytes(32).toString('hex');
+}
+
+/**
+ * Create an 8-character prefix from an auth code for display/lookup
+ */
+export function createAuthCodePrefix(authCode: string): string {
+  return authCode.substring(0, 8);
+}
+
+/**
+ * Calculate expiration date from now
+ */
+export function calculateExpirationDate(daysFromNow: number): Date {
+  return new Date(Date.now() + daysFromNow * 24 * 60 * 60 * 1000);
+}
+
+/**
+ * Check if an auth code has expired
+ */
+export function isAuthCodeExpired(expiresAt: Date): boolean {
+  return expiresAt < new Date();
+}
+
+/**
+ * Validate auth code format (64 hex characters)
+ */
+export function isValidAuthCodeFormat(authCode: string): boolean {
+  return /^[0-9a-f]{64}$/.test(authCode);
+}
+
+/**
+ * Create custom token claims object
+ */
+export function createCustomTokenClaims(deviceName: string, userId: string, authCodePrefix: string) {
+  return {
+    deviceName,
+    userId,
+    authCodePrefix,
+  };
+}
 
 /**
  * Consolidated auth code management utilities
@@ -10,18 +60,11 @@ export class AuthCodeManager {
   private auth = getAuth();
 
   /**
-   * Generate a cryptographically secure auth code
-   */
-  generateAuthCode(): string {
-    return crypto.randomBytes(32).toString('hex');
-  }
-
-  /**
    * Create and store a new auth code
    */
   async createAuthCode(userId: string, deviceId: string, deviceName: string): Promise<string> {
-    const authCode = this.generateAuthCode();
-    const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 1 year
+    const authCode = generateAuthCode();
+    const expiresAt = calculateExpirationDate(365); // 1 year
 
     await this.db.collection('authCodes').doc(authCode).set({
       userId,
@@ -51,7 +94,7 @@ export class AuthCodeManager {
     const authData = authCodeDoc.data()!;
 
     // Validate auth code hasn't expired
-    if (authData.expiresAt.toDate() < new Date()) {
+    if (isAuthCodeExpired(authData.expiresAt.toDate())) {
       throw new Error('Auth code expired');
     }
 
@@ -70,11 +113,8 @@ export class AuthCodeManager {
    * Generate Firebase custom token with consistent claims
    */
   async createCustomToken(deviceId: string, userId: string, deviceName: string, authCodePrefix: string): Promise<string> {
-    return await this.auth.createCustomToken(deviceId, {
-      deviceName,
-      userId,
-      authCodePrefix,
-    });
+    const claims = createCustomTokenClaims(deviceName, userId, authCodePrefix);
+    return await this.auth.createCustomToken(deviceId, claims);
   }
 
   /**
