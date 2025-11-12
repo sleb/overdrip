@@ -3,21 +3,8 @@
 import { helpPlugin } from "@clerc/plugin-help";
 import type { CommandWithHandler } from "clerc";
 import { Clerc, friendlyErrorPlugin, versionPlugin } from "clerc";
+import { name, version } from "../package.json";
 import { app } from "./app";
-import { validateConfig } from "./config";
-
-// Commands that require OAuth configuration
-const OAUTH_COMMANDS = ["setup", "start"];
-
-// Check if the current command requires OAuth
-const args = process.argv.slice(2);
-const command = args[0] || '';
-const needsOAuth = OAUTH_COMMANDS.includes(command);
-
-// Only validate OAuth configuration for commands that need it
-if (needsOAuth) {
-  validateConfig();
-}
 
 const setupCommand: CommandWithHandler = {
   name: "setup",
@@ -37,47 +24,33 @@ const startCommand: CommandWithHandler = {
 
 const configCommand: CommandWithHandler = {
   name: "config",
-  description: "Manage device configuration",
-  flags: {
-    verify: {
-      type: Boolean,
-      description: "Verify the configuration file is valid",
-    },
-    show: {
-      type: Boolean,
-      description: "Display the current configuration",
-    },
-  },
-  handler(context) {
-    if (context.flags.verify) {
-      app("config-verify");
-    } else if (context.flags.show) {
-      app("config-show");
-    } else {
-      // Default to show if no flags provided
-      app("config-show");
-    }
-  },
+  description: "Show device configuration",
+  handler() {
+    app("config:show");
+  }
+};
+
+const configVerifyCommand: CommandWithHandler = {
+  name: "config:verify",
+  description: "Verify the device configuration file",
+  handler() {
+    app("config:verify");
+  }
 };
 
 const cli = Clerc.create()
-  .name("overdrip")
-  .version("0.1.0")
+  .name(name)
   .scriptName("overdrip")
-  .description("Overdrip CLI - IoT plant watering system")
+  .version(version)
+  .description("Overdrip - IoT plant watering system")
   .use(helpPlugin({
     showHelpWhenNoCommand: true,
-    examples: [
-      ["overdrip setup", "Set up device authentication"],
-      ["overdrip config", "Show current configuration"],
-      ["overdrip config --verify", "Validate configuration file"],
-      ["overdrip start", "Start the device operations"]
-    ]
   }))
   .use(versionPlugin())
   .use(friendlyErrorPlugin())
   .command(setupCommand)
   .command(startCommand)
-  .command(configCommand);
+  .command(configCommand)
+  .command(configVerifyCommand);
 
 cli.parse();
