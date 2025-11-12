@@ -1,13 +1,11 @@
 import { signInWithCustomToken } from "firebase/auth/web-extension";
-import { FUNCTIONS_URL } from "../config";
 import { auth } from "../firebase";
-import { type ClientAuthTokens } from "../schemas";
 
 export interface DeviceClientOptions {
-  authCode?: string;
-  deviceId?: string;
-  deviceName?: string;
-  functionsUrl?: string;
+  authCode: string;
+  deviceId: string;
+  deviceName: string;
+  functionsUrl: string;
 }
 
 /**
@@ -17,38 +15,31 @@ export interface DeviceClientOptions {
  * Abstracts away Firebase implementation details.
  */
 export class OverdripDeviceClient {
-  private tokens: ClientAuthTokens | null = null;
+  private deviceId: string;
   private functionsUrl: string;
-  private authenticated: boolean = false;
+  private deviceName: string;
+  private authCode: string;
 
-  constructor(private options: DeviceClientOptions = {}) {
-    this.functionsUrl = options.functionsUrl ||
-      `${FUNCTIONS_URL}/refreshDeviceToken` ||
-      'https://refreshdevicetoken-h356ephhyq-uc.a.run.app';
+  constructor({ deviceId, deviceName, functionsUrl, authCode }: DeviceClientOptions) {
+    this.deviceId = deviceId;
+    this.deviceName = deviceName;
+    this.functionsUrl = functionsUrl;
+    this.authCode = authCode;
   }
 
   /**
    * Authenticate the device with the server
    * Must be called before using other methods
    */
-  async authenticate(authCode?: string, deviceId?: string): Promise<void> {
-    // Use provided credentials or fallback to options/stored tokens
-    const finalAuthCode = authCode || this.options.authCode;
-    const finalDeviceId = deviceId || this.options.deviceId;
-
-    if (!finalAuthCode || !finalDeviceId) {
-      throw new Error("Device not set up. Auth code and device ID are required.");
-    }
-
+  async authenticate(): Promise<void> {
     try {
       // Exchange auth code for Firebase custom token
-      const customToken = await this.getCustomToken(finalAuthCode, finalDeviceId);
+      const customToken = await this.getCustomToken(this.authCode, this.deviceId);
 
       // Sign into Firebase - Firebase handles all refresh from here
       await signInWithCustomToken(auth, customToken);
 
-      this.authenticated = true;
-      console.log(`✓ Device authenticated: ${finalDeviceId}`);
+      console.log(`✓ Device authenticated: ${this.deviceName} (${this.deviceId})`);
     } catch (error) {
       console.error("Authentication failed:", error);
       throw new Error("Authentication failed. Device may need to be re-registered.");
@@ -59,7 +50,7 @@ export class OverdripDeviceClient {
    * Check if the device is currently authenticated
    */
   isAuthenticated(): boolean {
-    return this.authenticated && auth.currentUser !== null;
+    return auth.currentUser !== null;
   }
 
   /**
@@ -78,7 +69,6 @@ export class OverdripDeviceClient {
    */
   async disconnect(): Promise<void> {
     await auth.signOut();
-    this.authenticated = false;
   }
 
   // ============================================================================
@@ -180,7 +170,7 @@ export class OverdripDeviceClient {
       throw new Error(`Token refresh failed: ${error}`);
     }
 
-    const responseData = await response.json() as { customToken: string };
+    const responseData = await response.json() as { customToken: string; };
     return responseData.customToken;
   }
 

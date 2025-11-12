@@ -20,11 +20,11 @@
   },
   "type": "module",
   "scripts": {
-    "dev": "cd ../.. && bun packages/cli/src/cli.ts",
-    "build": "cd ../.. && bun packages/cli/build.ts build",
-    "build:release": "cd ../.. && bun packages/cli/build.ts build:release",
-    "clean": "cd ../.. && bun packages/cli/build.ts clean",
-    "test": "cd ../.. && bun packages/cli/test-oauth.ts",
-    "test:real-oauth": "cd ../.. && bun packages/cli/test-real-oauth.ts"
+    "dev": "bun src/cli.ts",
+    "build": "bun build.ts build",
+    "build:release": "bun build.ts build:release",
+    "clean": "bun build.ts clean",
+    "test": "bun test-oauth.ts",
+    "test:real-oauth": "bun test-real-oauth.ts"
   }
 }
