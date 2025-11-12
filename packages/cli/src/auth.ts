@@ -1,23 +1,26 @@
-import os from "node:os";
-import path from "node:path";
-import { write } from "bun";
-import { unlink } from "node:fs/promises";
 import { signInWithCustomToken } from "firebase/auth/web-extension";
 import { auth } from "@overdrip/core/firebase";
-import { ClientAuthTokensSchema, type ClientAuthTokens } from "@overdrip/core/schemas";
+import {
+  type DeviceConfig,
+  loadDeviceConfig,
+  saveDeviceConfig,
+  createMinimalDeviceConfig,
+  deviceConfigExists,
+  getDeviceConfigPath
+} from "@overdrip/core/device-config";
 import { loadConfig } from "./config";
 
 /**
  * Device Authentication Manager for Hybrid Auth
  *
- * Uses long-lived auth codes that are exchanged for Firebase custom tokens on startup.
- * Firebase handles all token management during runtime.
+ * Uses the shared device configuration and long-lived auth codes that are
+ * exchanged for Firebase custom tokens on startup.
  */
 export class DeviceAuth {
-  private tokens: ClientAuthTokens | null = null;
+  private config: DeviceConfig | null = null;
 
   constructor() {
-    // Tokens will be loaded lazily when first accessed
+    // Config will be loaded lazily when first accessed
   }
 
   /**
@@ -25,9 +28,9 @@ export class DeviceAuth {
    * Call this once when the process starts
    */
   async authenticate(): Promise<void> {
-    await this.ensureTokensLoaded();
+    await this.ensureConfigLoaded();
 
-    if (!this.tokens) {
+    if (!this.config) {
       throw new Error("Device not set up. Run 'overdrip setup' first.");
     }
 
@@ -38,7 +41,7 @@ export class DeviceAuth {
       // Sign into Firebase - Firebase handles all refresh from here
       await signInWithCustomToken(auth, customToken);
 
-      console.log(`✓ Authenticated device: ${this.tokens.deviceName} (${this.tokens.deviceId})`);
+      console.log(`✓ Authenticated device: ${this.config.deviceName} (${this.config.deviceId})`);
     } catch (error) {
       console.error("Authentication failed:", error);
       throw new Error("Authentication failed. Device may need to be re-registered.");
@@ -50,12 +53,12 @@ export class DeviceAuth {
    * Uses unauthenticated HTTPS endpoint
    */
   private async getCustomToken(): Promise<string> {
-    if (!this.tokens) {
-      throw new Error("No auth tokens available");
+    if (!this.config) {
+      throw new Error("No device configuration available");
     }
 
-    const config = loadConfig();
-    const functionUrl = config.firebaseFunctionsUrl ||
+    const cliConfig = loadConfig();
+    const functionUrl = cliConfig.firebaseFunctionsUrl ||
       'https://refreshdevicetoken-h356ephhyq-uc.a.run.app';
 
     const response = await fetch(functionUrl, {
@@ -64,8 +67,8 @@ export class DeviceAuth {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        authCode: this.tokens.authCode,
-        deviceId: this.tokens.deviceId
+        authCode: this.config.authCode,
+        deviceId: this.config.deviceId
       })
     });
 
@@ -80,92 +83,56 @@ export class DeviceAuth {
   }
 
   /**
-   * Store auth tokens after initial setup
+   * Store device configuration after initial setup
    */
   async storeInitialTokens(authCode: string, deviceId: string, deviceName: string): Promise<void> {
-    this.tokens = {
-      authCode,
-      deviceId,
-      deviceName
-    };
-    await this.saveTokens();
+    this.config = createMinimalDeviceConfig(deviceId, deviceName, authCode);
+    await saveDeviceConfig(this.config);
   }
 
   /**
    * Check if device is set up
    */
   async isSetup(): Promise<boolean> {
-    await this.ensureTokensLoaded();
-    return this.tokens !== null;
+    return await deviceConfigExists();
   }
 
   /**
    * Get device info for display purposes
    */
   async getDeviceInfo(): Promise<{ deviceId: string; deviceName: string } | null> {
-    await this.ensureTokensLoaded();
-    if (!this.tokens) return null;
+    await this.ensureConfigLoaded();
+    if (!this.config) return null;
     return {
-      deviceId: this.tokens.deviceId,
-      deviceName: this.tokens.deviceName
+      deviceId: this.config.deviceId,
+      deviceName: this.config.deviceName
     };
   }
 
   /**
-   * Clear all tokens (logout)
+   * Clear device configuration (logout)
    */
   async logout(): Promise<void> {
-    this.tokens = null;
-    await this.clearStoredTokens();
+    this.config = null;
+    try {
+      await Bun.write(getDeviceConfigPath(), ''); // Clear the file
+    } catch {
+      // File might not exist
+    }
     await auth.signOut();
   }
 
   /**
-   * Ensure tokens are loaded (lazy loading)
+   * Ensure config is loaded (lazy loading)
    */
-  private async ensureTokensLoaded(): Promise<void> {
-    if (this.tokens === null) {
-      await this.loadTokens();
-    }
-  }
-
-  // Storage methods
-  private async loadTokens(): Promise<void> {
-    try {
-      const authPath = this.getAuthPath();
-      const file = Bun.file(authPath);
-      if (await file.exists()) {
-        const content = await file.text();
-        const data = JSON.parse(content);
-        this.tokens = ClientAuthTokensSchema.parse(data);
+  private async ensureConfigLoaded(): Promise<void> {
+    if (this.config === null) {
+      try {
+        this.config = await loadDeviceConfig();
+      } catch {
+        this.config = null;
       }
-    } catch (error) {
-      console.error("Failed to load auth tokens:", error);
-      this.tokens = null;
     }
-  }
-
-  private async saveTokens(): Promise<void> {
-    if (!this.tokens) return;
-
-    const authPath = this.getAuthPath();
-    await write(authPath, JSON.stringify(this.tokens), {
-      createPath: true,
-      mode: 0o600,
-    });
-  }
-
-  private async clearStoredTokens(): Promise<void> {
-    const authPath = this.getAuthPath();
-    try {
-      await unlink(authPath);
-    } catch (error) {
-      // File might not exist, ignore
-    }
-  }
-
-  private getAuthPath(): string {
-    return path.join(os.homedir(), ".overdrip", "auth.json");
   }
 }
 

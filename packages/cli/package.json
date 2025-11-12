@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "Overdrip CLI - IoT plant watering system",
   "dependencies": {
+    "@clerc/plugin-friendly-error": "^0.44.0",
+    "@clerc/plugin-help": "^0.44.0",
+    "@clerc/plugin-version": "^0.44.0",
     "@overdrip/core": "workspace:*",
     "clerc": "^0.44.0",
     "ink": "^6.4.0",

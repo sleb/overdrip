@@ -1,0 +1,29 @@
+{
+  "name": "@overdrip/runtime",
+  "version": "0.1.0",
+  "description": "Overdrip Runtime - IoT device runtime for Raspberry Pi",
+  "type": "module",
+  "main": "./src/index.ts",
+  "bin": {
+    "overdrip-runtime": "./src/index.ts"
+  },
+  "scripts": {
+    "dev": "bun --hot ./src/index.ts",
+    "start": "bun ./src/index.ts",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@overdrip/core": "workspace:*",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.2"
+  },
+  "keywords": [
+    "iot",
+    "raspberry-pi",
+    "plant-watering",
+    "sensors",
+    "automation"
+  ]
+}

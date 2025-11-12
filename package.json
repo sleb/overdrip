@@ -12,9 +12,12 @@
     "cli:build": "bun packages/cli/build.ts build",
     "cli:build:release": "bun packages/cli/build.ts build:release",
     "cli:clean": "bun packages/cli/build.ts clean",
+    "runtime:dev": "cd packages/runtime && bun --hot src/index.ts",
+    "runtime:start": "cd packages/runtime && bun src/index.ts",
     "test": "bun test packages/core/src/__tests__ packages/functions/src/__tests__ packages/cli/src/__tests__",
     "test:core": "bun test packages/core/src/__tests__",
     "test:functions": "bun test packages/functions/src/__tests__",
-    "test:cli": "bun test packages/cli/src/__tests__"
+    "test:cli": "bun test packages/cli/src/__tests__",
+    "test:runtime": "bun test packages/runtime/src/__tests__"
   }
 }

@@ -2,16 +2,28 @@
   "name": "@overdrip/core",
   "type": "module",
   "exports": {
+    ".": {
+      "import": "./src/index.ts"
+    },
     "./config": {
-    "import": "./src/config.ts"
+      "import": "./src/config.ts"
+    },
+    "./firebase": {
+      "import": "./src/firebase.ts"
+    },
+    "./schemas": {
+      "import": "./src/schemas.ts"
+    },
+    "./client": {
+      "import": "./src/client/device-client.ts"
+    },
+    "./types": {
+      "import": "./src/types/index.ts"
+    },
+    "./device-config": {
+      "import": "./src/device-config.ts"
+    }
   },
-  "./firebase": {
-  "import": "./src/firebase.ts"
-},
-"./schemas": {
-"import": "./src/schemas.ts"
-}
-},
 "dependencies": {
   "firebase": "^12.5.0",
   "zod": "^3.24.1"

@@ -2,7 +2,7 @@ import { initializeApp } from "firebase/app";
 import { GoogleAuthProvider, getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getFunctions } from "firebase/functions";
-import { getFirebaseConfig } from "./config.js";
+import { getFirebaseConfig } from "./config";
 
 const app = initializeApp(getFirebaseConfig());
 
