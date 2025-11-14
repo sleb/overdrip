@@ -15,9 +15,6 @@ initializeApp();
 
 const authCodeManager = new AuthCodeManager();
 
-
-
-
 /**
  * Modified setup device function that returns long-lived auth codes
  * instead of custom tokens

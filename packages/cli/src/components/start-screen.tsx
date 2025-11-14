@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { Box, Text, Newline } from "ink";
+import { Box, Newline, Text } from "ink";
 import Spinner from "ink-spinner";
+import React, { useEffect, useState } from "react";
 import { deviceAuth } from "../auth";
 
 type StartState = "loading" | "authenticating" | "running" | "error";
