@@ -9,6 +9,7 @@
   "main": "lib/index.js",
   "scripts": {
     "build": "bun build src/index.ts --outdir lib --target node --format cjs --external firebase-admin --external firebase-functions",
+    "typecheck": "bun run build",
     "serve": "bun run build && firebase emulators:start --only functions",
     "shell": "bun run build && firebase functions:shell",
     "deploy": "firebase deploy --only functions",

@@ -1,6 +1,9 @@
 {
   "name": "@overdrip/core",
   "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
   "exports": {
     ".": {
       "import": "./src/index.ts"

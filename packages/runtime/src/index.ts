@@ -7,7 +7,10 @@
  * It handles device authentication, sensor monitoring, and actuator control.
  */
 
-import { loadDeviceConfig, OverdripDeviceClient, type DeviceConfig } from '@overdrip/core';
+import { OverdripDeviceClient } from "@overdrip/core/client";
+import { type DeviceConfig } from "@overdrip/core/device-config";
+
+
 
 class OverdripRuntime {
   private client: OverdripDeviceClient;
@@ -16,11 +19,7 @@ class OverdripRuntime {
 
   constructor(config: DeviceConfig) {
     this.config = config;
-    this.client = new OverdripDeviceClient({
-      authCode: config.authCode,
-      deviceId: config.deviceId,
-      deviceName: config.deviceName,
-    });
+    this.client = new OverdripDeviceClient(config);
   }
 
   /**
@@ -160,44 +159,4 @@ class OverdripRuntime {
       // TODO: Implement config update handling
     });
   }
-}
-
-/**
- * Main function
- */
-const main = async (): Promise<void> => {
-  console.log('🚀 Overdrip Runtime v0.1.0');
-
-  // Handle graceful shutdown
-  const shutdown = async (signal: string) => {
-    console.log(`\n📡 Received ${signal}, shutting down gracefully...`);
-    if (runtime) {
-      await runtime.stop();
-    }
-    process.exit(0);
-  };
-
-  process.on('SIGINT', () => shutdown('SIGINT'));
-  process.on('SIGTERM', () => shutdown('SIGTERM'));
-
-  // Load configuration
-  let config: DeviceConfig;
-  try {
-    config = await loadDeviceConfig();
-  } catch (error) {
-    console.error('❌ Failed to load configuration:', error);
-    process.exit(1);
-  }
-
-  // Create and start runtime
-  const runtime = new OverdripRuntime(config);
-  await runtime.start();
-};
-
-// Run if this is the main module
-if (import.meta.main) {
-  main().catch((error) => {
-    console.error('💥 Fatal error:', error);
-    process.exit(1);
-  });
 }
