@@ -8,37 +8,23 @@
  */
 
 import { OverdripDeviceClient } from "@overdrip/core/client";
-import { type DeviceConfig } from "@overdrip/core/device-config";
 
-
-
-class OverdripRuntime {
-  private client: OverdripDeviceClient;
-  private config: DeviceConfig;
+export class OverdripRuntime {
   private isRunning: boolean = false;
 
-  constructor(config: DeviceConfig) {
-    this.config = config;
-    this.client = new OverdripDeviceClient(config);
-  }
+  constructor(private client: OverdripDeviceClient) { }
 
   /**
    * Start the runtime system
    */
   async start(): Promise<void> {
     console.log('🌱 Starting Overdrip Runtime...');
-    console.log(`📍 Device: ${this.config.deviceName} (${this.config.deviceId})`);
+    console.log(`📍 Device: ${this.client.deviceName} (${this.client.deviceId})`);
 
     try {
       // Authenticate with the server
       console.log('🔐 Authenticating device...');
       await this.client.authenticate();
-
-      // Set up command listening (stub)
-      this.setupCommandHandling();
-
-      // Set up config update listening (stub)
-      this.setupConfigHandling();
 
       // Start main loop
       this.isRunning = true;
@@ -59,13 +45,6 @@ class OverdripRuntime {
   async stop(): Promise<void> {
     console.log('⏹️  Stopping Overdrip Runtime...');
     this.isRunning = false;
-
-    try {
-      await this.client.disconnect();
-      console.log('✅ Runtime stopped gracefully');
-    } catch (error) {
-      console.error('❌ Error during shutdown:', error);
-    }
   }
 
   /**
@@ -73,90 +52,18 @@ class OverdripRuntime {
    */
   private async runMainLoop(): Promise<void> {
     while (this.isRunning) {
-      try {
-        // TODO: Read sensors
-        await this.readSensors();
+      // TODO: Read sensors
+      console.log('🔄 Reading sensors...');
 
-        // TODO: Check watering schedules
-        await this.checkWateringSchedule();
+      // TODO: Check watering schedules
+      console.log('💧 Checking watering schedules...');
 
-        // TODO: Upload telemetry
-        await this.uploadTelemetry();
+      // TODO: Upload telemetry
+      console.log('📤 Uploading telemetry data...');
 
-        // Wait before next iteration
-        await new Promise(resolve => setTimeout(resolve, 30000)); // 30 seconds
-
-      } catch (error) {
-        console.error('💥 Error in main loop:', error);
-        // Continue running but wait a bit longer
-        await new Promise(resolve => setTimeout(resolve, 60000)); // 1 minute
-      }
+      // Wait before next iteration
+      await new Promise(resolve => setTimeout(resolve, 30000)); // 30 seconds
     }
-  }
-
-  /**
-   * Read sensor data (stub)
-   */
-  private async readSensors(): Promise<void> {
-    console.log('📊 [STUB] Reading sensors...');
-
-    // TODO: Implement actual sensor reading
-    const mockReading = {
-      deviceId: this.config.deviceId,
-      sensorType: 'moisture' as const,
-      value: Math.random() * 100,
-      unit: '%',
-      timestamp: new Date(),
-      location: 'probe-1'
-    };
-
-    // Upload to server (using stub)
-    await this.client.uploadSensorReading(mockReading);
-  }
-
-  /**
-   * Check watering schedule (stub)
-   */
-  private async checkWateringSchedule(): Promise<void> {
-    console.log('💧 [STUB] Checking watering schedule...');
-    // TODO: Implement watering logic
-  }
-
-  /**
-   * Upload telemetry data (stub)
-   */
-  private async uploadTelemetry(): Promise<void> {
-    console.log('📡 [STUB] Uploading telemetry...');
-
-    // TODO: Implement actual telemetry collection
-    const mockStatus = {
-      deviceId: this.config.deviceId,
-      status: 'online' as const,
-      uptime: process.uptime(),
-      lastSeen: new Date(),
-      version: this.config.setupVersion
-    };
-
-    await this.client.uploadDeviceStatus(mockStatus);
-  }
-
-  /**
-   * Set up command handling (stub)
-   */
-  private setupCommandHandling(): void {
-    this.client.onCommand((command) => {
-      console.log('🎮 Received command:', command);
-      // TODO: Implement command handling
-    });
-  }
-
-  /**
-   * Set up config update handling (stub)
-   */
-  private setupConfigHandling(): void {
-    this.client.onConfigUpdate((config) => {
-      console.log('⚙️ Config updated:', config);
-      // TODO: Implement config update handling
-    });
+    console.log('✅ Runtime stopped gracefully');
   }
 }

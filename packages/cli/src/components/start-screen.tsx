@@ -1,5 +1,6 @@
 import { OverdripDeviceClient } from "@overdrip/core/client";
 import { loadDeviceConfig } from "@overdrip/core/device-config";
+import { OverdripRuntime } from "@overdrip/runtime";
 import { Box, Newline, Text } from "ink";
 import Spinner from "ink-spinner";
 import React, { useEffect, useState } from "react";
@@ -49,8 +50,8 @@ const StartScreen: React.FC = () => {
         state: "running",
       }));
 
-      // TODO: Start actual device operations (sensor reading, data push, etc.)
-      // For now, just show running status
+      const runtime = new OverdripRuntime(deviceClient);
+      runtime.start();
 
     } catch (error) {
       setScreenState(prev => ({
