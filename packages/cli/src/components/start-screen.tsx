@@ -1,7 +1,8 @@
+import { OverdripDeviceClient } from "@overdrip/core/client";
+import { loadDeviceConfig } from "@overdrip/core/device-config";
 import { Box, Newline, Text } from "ink";
 import Spinner from "ink-spinner";
 import React, { useEffect, useState } from "react";
-import { deviceAuth } from "../auth";
 
 type StartState = "loading" | "authenticating" | "running" | "error";
 
@@ -26,11 +27,12 @@ const StartScreen: React.FC = () => {
       // Check if device is set up
       setScreenState({ state: "loading" });
 
-      if (!(await deviceAuth.isSetup())) {
-        throw new Error("No device credentials found. Please run 'overdrip setup' first.");
+      const deviceInfo = (await loadDeviceConfig());
+      if (!deviceInfo) {
+        throw new Error(
+          "No device credentials found. Please run 'overdrip setup' to register your device."
+        );
       }
-
-      const deviceInfo = (await deviceAuth.getDeviceInfo())!;
 
       setScreenState({
         state: "authenticating",
@@ -39,7 +41,8 @@ const StartScreen: React.FC = () => {
       });
 
       // Authenticate with Firebase using auth code
-      await deviceAuth.authenticate();
+      const deviceClient = new OverdripDeviceClient(deviceInfo);
+      await deviceClient.authenticate();
 
       setScreenState(prev => ({
         ...prev,

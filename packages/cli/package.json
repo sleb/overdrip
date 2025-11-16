@@ -20,6 +20,7 @@
   "type": "module",
   "scripts": {
     "build": "bun build.ts",
-    "clean": "bun build.ts clean"
+    "clean": "bun build.ts clean",
+    "typecheck": "tsc --noEmit"
   }
 }

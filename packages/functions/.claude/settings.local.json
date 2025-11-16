@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gcloud services list:*)",
+      "Bash(firebase deploy:*)",
+      "Bash(firebase apps:list:*)",
+      "Bash(gcloud alpha functions list:*)",
+      "WebSearch",
+      "Bash(firebase apphosting:backends:list:*)",
+      "Bash(gcloud alpha firebase test functions describe:*)",
+      "Bash(gcloud app services list:*)",
+      "Bash(firebase database:settings:list:*)",
+      "Bash(cat:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(gcloud config:*)",
+      "Bash(gcloud config get-value:*)",
+      "Bash(gcloud functions describe:*)",
+      "Bash(firebase functions:delete:*)",
+      "Bash(npm install:*)",
+      "Bash(firebase --version:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

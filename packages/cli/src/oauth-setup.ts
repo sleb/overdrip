@@ -1,3 +1,4 @@
+import { loadDeviceConfig, saveDeviceConfig } from "@overdrip/core/device-config";
 import { auth, functions } from "@overdrip/core/firebase";
 import {
   SetupDeviceRequestSchema,
@@ -6,7 +7,7 @@ import {
 } from "@overdrip/core/schemas";
 import { GoogleAuthProvider, signInWithCredential } from "firebase/auth/web-extension";
 import { httpsCallable } from "firebase/functions";
-import { deviceAuth } from "./auth";
+import { version } from "../package.json";
 import { loadConfig } from "./config";
 import { buildOAuthURL, exchangeCodeForTokens, generatePKCEChallenge } from "./oauth";
 import { OAuthServer } from "./oauth-server";
@@ -35,7 +36,7 @@ export const oauthSetupDevice = async (
   const config = loadConfig();
 
   // Check if this is a re-authentication
-  const existingDeviceInfo = await deviceAuth.getDeviceInfo();
+  const existingDeviceInfo = await loadDeviceConfig();
   const isReauth = !!existingDeviceInfo;
 
   onProgress({ step: "starting_oauth_server" });
@@ -118,11 +119,17 @@ export const oauthSetupDevice = async (
   onProgress({ step: "storing_credentials" });
 
   // Store authentication tokens
-  await deviceAuth.storeInitialTokens(
-    setupResponse.authCode,
-    setupResponse.deviceId,
-    deviceName
-  );
+  const now = new Date();
+  await saveDeviceConfig({
+    deviceId: setupResponse.deviceId,
+    deviceName,
+    authCode: setupResponse.authCode,
+    customTokenUrl: "https://us-central1-overdrip-ed767.cloudfunctions.net/refreshDeviceToken",
+    setupAt: now,
+    setupVersion: version,
+    lastModified: now,
+
+  });
 
   onProgress({ step: "complete" });
 

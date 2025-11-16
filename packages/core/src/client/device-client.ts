@@ -5,7 +5,7 @@ export interface DeviceClientOptions {
   authCode: string;
   deviceId: string;
   deviceName: string;
-  functionsUrl: string;
+  customTokenUrl: string;
 }
 
 /**
@@ -16,14 +16,14 @@ export interface DeviceClientOptions {
  */
 export class OverdripDeviceClient {
   private deviceId: string;
-  private functionsUrl: string;
+  private customTokenUrl: string;
   private deviceName: string;
   private authCode: string;
 
-  constructor({ deviceId, deviceName, functionsUrl, authCode }: DeviceClientOptions) {
+  constructor({ deviceId, deviceName, customTokenUrl, authCode }: DeviceClientOptions) {
     this.deviceId = deviceId;
     this.deviceName = deviceName;
-    this.functionsUrl = functionsUrl;
+    this.customTokenUrl = customTokenUrl;
     this.authCode = authCode;
   }
 
@@ -154,7 +154,7 @@ export class OverdripDeviceClient {
    * Exchange auth code for Firebase custom token via Cloud Function
    */
   private async getCustomToken(authCode: string, deviceId: string): Promise<string> {
-    const response = await fetch(this.functionsUrl, {
+    const response = await fetch(this.customTokenUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

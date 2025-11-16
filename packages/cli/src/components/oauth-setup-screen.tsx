@@ -1,8 +1,8 @@
+import { loadDeviceConfig } from "@overdrip/core/device-config";
 import { Box, Newline, Text } from "ink";
 import Spinner from "ink-spinner";
 import TextInput, { UncontrolledTextInput } from "ink-text-input";
 import React, { useCallback, useEffect, useState } from "react";
-import { deviceAuth } from "../auth";
 import { oauthSetupDevice, openBrowser, type SetupProgress, type SetupResult } from "../oauth-setup";
 
 type SetupState =
@@ -35,7 +35,7 @@ const OAuthSetupScreen: React.FC = () => {
   useEffect(() => {
     const loadTokens = async () => {
       try {
-        const deviceInfo = await deviceAuth.getDeviceInfo();
+        const deviceInfo = await loadDeviceConfig();
         if (deviceInfo) {
           // Existing device - ask about name
           setScreenState({

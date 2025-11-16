@@ -6,6 +6,7 @@
     {
       "source": "packages/functions",
       "codebase": "default",
+      "region": "us-central1",
       "ignore": [
         "node_modules",
         ".git",
