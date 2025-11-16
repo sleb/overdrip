@@ -1,10 +1,10 @@
-import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/auth-context";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 
 /**
  * ProtectedRoute wrapper component for routes that require authentication.
  */
-export function ProtectedRoute() {
+export const ProtectedRoute = () => {
   const { user, loading } = useAuth();
   const location = useLocation();
 
@@ -22,4 +22,4 @@ export function ProtectedRoute() {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
   return <Outlet />;
-}
+};

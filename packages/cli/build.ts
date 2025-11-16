@@ -16,7 +16,7 @@ interface BuildOptions {
 /**
  * Validate required environment variables for production builds
  */
-function validateProductionEnv(): void {
+const validateProductionEnv = (): void => {
   const required = ["GOOGLE_OAUTH_CLIENT_ID"];
   const optional = ["GOOGLE_OAUTH_CLIENT_SECRET"];
   const missing: string[] = [];
@@ -45,12 +45,12 @@ function validateProductionEnv(): void {
   }
 
   console.log("✅ All required environment variables are present");
-}
+};
 
 /**
  * Compile the CLI executable with appropriate configuration
  */
-async function build(options: BuildOptions): Promise<void> {
+const build = async (options: BuildOptions): Promise<void> => {
   const { mode, outFile = "overdrip" } = options;
 
   console.log(`🏗️  Compiling Overdrip CLI (${mode} mode)`);
@@ -95,12 +95,12 @@ async function build(options: BuildOptions): Promise<void> {
     console.error("❌ Build failed:", error);
     process.exit(1);
   }
-}
+};
 
 /**
  * Clean build artifacts
  */
-async function clean(): Promise<void> {
+const clean = async (): Promise<void> => {
   console.log("🧹 Cleaning build artifacts...");
 
   const artifacts = ["packages/cli/overdrip", "packages/cli/overdrip.exe"];
@@ -113,12 +113,12 @@ async function clean(): Promise<void> {
   }
 
   console.log("✅ Clean completed");
-}
+};
 
 /**
  * Main CLI interface
  */
-async function main(): Promise<void> {
+const main = async (): Promise<void> => {
   const args = process.argv.slice(2);
   const command = args[0];
 
@@ -158,7 +158,7 @@ async function main(): Promise<void> {
       console.log("    GOOGLE_OAUTH_CLIENT_SECRET Google OAuth 2.0 Client Secret (required for your Desktop client)");
       process.exit(0);
   }
-}
+};
 
 // Run if called directly
 if (import.meta.main) {

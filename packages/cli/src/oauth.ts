@@ -21,7 +21,7 @@ export interface OAuthTokenResponse {
 /**
  * Generate PKCE code verifier and challenge
  */
-export function generatePKCEChallenge(): PKCEChallenge {
+export const generatePKCEChallenge = (): PKCEChallenge => {
   // Generate code verifier: 128 character random string
   const codeVerifier = base64URLEncode(crypto.randomBytes(96));
 
@@ -37,26 +37,26 @@ export function generatePKCEChallenge(): PKCEChallenge {
     codeChallenge,
     state
   };
-}
+};
 
 /**
  * Base64URL encode (RFC 4648 section 5)
  */
-function base64URLEncode(buffer: Buffer): string {
+const base64URLEncode = (buffer: Buffer): string => {
   return btoa(String.fromCharCode(...buffer))
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=/g, '');
-}
+};
 
 /**
  * Build Google OAuth authorization URL
  */
-export function buildOAuthURL(
+export const buildOAuthURL = (
   clientId: string,
   redirectUri: string,
   challenge: PKCEChallenge
-): string {
+): string => {
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: redirectUri,
@@ -68,18 +68,18 @@ export function buildOAuthURL(
   });
 
   return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
-}
+};
 
 /**
  * Exchange authorization code for tokens
  */
-export async function exchangeCodeForTokens(
+export const exchangeCodeForTokens = async (
   clientId: string,
   redirectUri: string,
   code: string,
   codeVerifier: string,
   clientSecret?: string
-): Promise<OAuthTokenResponse> {
+): Promise<OAuthTokenResponse> => {
   const params: Record<string, string> = {
     client_id: clientId,
     code,
@@ -107,12 +107,12 @@ export async function exchangeCodeForTokens(
   }
 
   return (await response.json()) as OAuthTokenResponse;
-}
+};
 
 /**
  * Parse ID token payload (without verification - Firebase will verify)
  */
-export function parseIdToken(idToken: string): any {
+export const parseIdToken = (idToken: string): any => {
   const parts = idToken.split('.');
   if (parts.length !== 3) {
     throw new Error('Invalid ID token format');
@@ -127,4 +127,4 @@ export function parseIdToken(idToken: string): any {
   const paddedPayload = payload + '=='.substring(0, (4 - payload.length % 4) % 4);
   const decoded = atob(paddedPayload);
   return JSON.parse(decoded);
-}
+};

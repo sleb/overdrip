@@ -9,48 +9,48 @@ import crypto from "node:crypto";
 /**
  * Generate a cryptographically secure auth code (64 hex characters)
  */
-export function generateAuthCode(): string {
+export const generateAuthCode = (): string => {
   return crypto.randomBytes(32).toString('hex');
-}
+};
 
 /**
  * Create an 8-character prefix from an auth code for display/lookup
  */
-export function createAuthCodePrefix(authCode: string): string {
+export const createAuthCodePrefix = (authCode: string): string => {
   return authCode.substring(0, 8);
-}
+};
 
 /**
  * Calculate expiration date from now
  */
-export function calculateExpirationDate(daysFromNow: number): Date {
+export const calculateExpirationDate = (daysFromNow: number): Date => {
   return new Date(Date.now() + daysFromNow * 24 * 60 * 60 * 1000);
-}
+};
 
 /**
  * Check if an auth code has expired
  */
-export function isAuthCodeExpired(expiresAt: Date): boolean {
+export const isAuthCodeExpired = (expiresAt: Date): boolean => {
   return expiresAt < new Date();
-}
+};
 
 /**
  * Validate auth code format (64 hex characters)
  */
-export function isValidAuthCodeFormat(authCode: string): boolean {
+export const isValidAuthCodeFormat = (authCode: string): boolean => {
   return /^[0-9a-f]{64}$/.test(authCode);
-}
+};
 
 /**
  * Create custom token claims object
  */
-export function createCustomTokenClaims(deviceName: string, userId: string, authCodePrefix: string) {
+export const createCustomTokenClaims = (deviceName: string, userId: string, authCodePrefix: string) => {
   return {
     deviceName,
     userId,
     authCodePrefix,
   };
-}
+};
 
 /**
  * Consolidated auth code management utilities

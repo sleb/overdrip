@@ -5,7 +5,10 @@
   ],
   "private": true,
   "devDependencies": {
-    "@types/bun": "1.3.2"
+    "@types/bun": "1.3.2",
+    "@typescript-eslint/eslint-plugin": "^8.46.4",
+    "@typescript-eslint/parser": "^8.46.4",
+    "eslint": "^9.39.1"
   },
   "scripts": {
     "cli:dev": "cd packages/cli && bun src/cli.ts",
@@ -18,6 +21,8 @@
     "test:core": "bun test packages/core/src/__tests__",
     "test:functions": "bun test packages/functions/src/__tests__",
     "test:cli": "bun test packages/cli/src/__tests__",
-    "test:runtime": "bun test packages/runtime/src/__tests__"
+    "test:runtime": "bun test packages/runtime/src/__tests__",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   }
 }

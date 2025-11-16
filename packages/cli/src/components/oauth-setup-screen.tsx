@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Box, Text, Newline } from "ink";
-import TextInput, { UncontrolledTextInput } from "ink-text-input";
+import { Box, Newline, Text } from "ink";
 import Spinner from "ink-spinner";
-import { oauthSetupDevice, openBrowser, type SetupProgress, type SetupResult } from "../oauth-setup";
+import TextInput, { UncontrolledTextInput } from "ink-text-input";
+import React, { useCallback, useEffect, useState } from "react";
 import { deviceAuth } from "../auth";
+import { oauthSetupDevice, openBrowser, type SetupProgress, type SetupResult } from "../oauth-setup";
 
 type SetupState =
   | "loading_existing"
@@ -288,7 +288,7 @@ const OAuthSetupScreen: React.FC = () => {
   return <Text>Unknown state</Text>;
 };
 
-function getProgressMessage(step: string): string {
+const getProgressMessage = (step: string): string => {
   switch (step) {
     case "initializing":
       return "Initializing setup...";
@@ -309,6 +309,6 @@ function getProgressMessage(step: string): string {
     default:
       return step;
   }
-}
+};
 
 export default OAuthSetupScreen;

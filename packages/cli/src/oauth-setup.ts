@@ -1,16 +1,15 @@
-import { signInWithCredential, GoogleAuthProvider } from "firebase/auth/web-extension";
 import { auth, functions } from "@overdrip/core/firebase";
-import { httpsCallable } from "firebase/functions";
 import {
   SetupDeviceRequestSchema,
   SetupDeviceResponseSchema,
-  SetupDeviceErrorSchema,
-  type SetupDeviceResponse,
+  type SetupDeviceResponse
 } from "@overdrip/core/schemas";
-import { loadConfig } from "./config";
-import { generatePKCEChallenge, buildOAuthURL, exchangeCodeForTokens } from "./oauth";
-import { OAuthServer } from "./oauth-server";
+import { GoogleAuthProvider, signInWithCredential } from "firebase/auth/web-extension";
+import { httpsCallable } from "firebase/functions";
 import { deviceAuth } from "./auth";
+import { loadConfig } from "./config";
+import { buildOAuthURL, exchangeCodeForTokens, generatePKCEChallenge } from "./oauth";
+import { OAuthServer } from "./oauth-server";
 
 export interface SetupProgress {
   step: string;
@@ -26,10 +25,10 @@ export interface SetupResult {
 /**
  * Complete OAuth-based device setup flow
  */
-export async function oauthSetupDevice(
+export const oauthSetupDevice = async (
   deviceName: string,
   onProgress: (progress: SetupProgress) => void
-): Promise<SetupResult> {
+): Promise<SetupResult> => {
   onProgress({ step: "initializing" });
 
   // Load configuration
@@ -132,15 +131,15 @@ export async function oauthSetupDevice(
     deviceName,
     isReauth,
   };
-}
+};
 
 /**
  * Call the setupDevice Cloud Function
  */
-async function callSetupDeviceFunction(
+const callSetupDeviceFunction = async (
   deviceName: string,
   deviceId?: string
-): Promise<SetupDeviceResponse> {
+): Promise<SetupDeviceResponse> => {
   // Prepare request data - only include deviceId if it has a value
   const requestData: any = { deviceName };
   if (deviceId) {
@@ -161,12 +160,12 @@ async function callSetupDeviceFunction(
     const errorMessage = error.message || error.code || 'Unknown error';
     throw new Error(`Setup device failed: ${errorMessage}`);
   }
-}
+};
 
 /**
  * Open URL in default browser (cross-platform)
  */
-export async function openBrowser(url: string): Promise<boolean> {
+export const openBrowser = async (url: string): Promise<boolean> => {
   try {
     const platform = process.platform;
 
@@ -184,4 +183,4 @@ export async function openBrowser(url: string): Promise<boolean> {
     // Browser opening failed, user will need to copy/paste URL
     return false;
   }
-}
+};

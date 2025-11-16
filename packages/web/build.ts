@@ -1,8 +1,8 @@
 #!/usr/bin/env bun
+import plugin from "bun-plugin-tailwind";
 import { existsSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import path from "node:path";
-import plugin from "bun-plugin-tailwind";
 
 if (process.argv.includes("--help") || process.argv.includes("-h")) {
   console.log(`
@@ -48,7 +48,7 @@ const parseValue = (value: string): any => {
   return value;
 };
 
-function parseArgs(): Partial<Bun.BuildConfig> {
+const parseArgs = (): Partial<Bun.BuildConfig> => {
   const config: Partial<Bun.BuildConfig> = {};
   const args = process.argv.slice(2);
 
@@ -94,7 +94,7 @@ function parseArgs(): Partial<Bun.BuildConfig> {
   }
 
   return config;
-}
+};
 
 const formatFileSize = (bytes: number): string => {
   const units = ["B", "KB", "MB", "GB"];

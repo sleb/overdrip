@@ -20,7 +20,7 @@ export interface FirebaseConfig {
  * Returns the Firebase configuration for the Overdrip backend.
  * These values are bundled with the app.
  */
-export function getFirebaseConfig(): FirebaseConfig {
+export const getFirebaseConfig = (): FirebaseConfig => {
   return {
     apiKey: "AIzaSyA_jZo1A7-ihS47Gz2sn9JI3wfcoHRo24M",
     authDomain: "overdrip-ed767.firebaseapp.com",
@@ -30,7 +30,7 @@ export function getFirebaseConfig(): FirebaseConfig {
     appId: "1:516718005369:web:cbf99f8ef8a9a7742c98a8",
     measurementId: "G-DFQ1DD8Z2F",
   };
-}
+};
 
 /**
  * The Cloud Functions URL for the Overdrip backend.

@@ -1,5 +1,3 @@
-import { signOut } from "firebase/auth";
-import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,8 +9,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/auth-context";
 import { auth } from "@overdrip/core/firebase";
+import { signOut } from "firebase/auth";
+import { Link, useNavigate } from "react-router-dom";
 
-export function Header() {
+export const Header = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -85,4 +85,4 @@ export function Header() {
       </div>
     </header>
   );
-}
+};

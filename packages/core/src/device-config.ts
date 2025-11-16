@@ -1,6 +1,6 @@
-import { z } from "zod";
 import os from "node:os";
 import path from "node:path";
+import { z } from "zod";
 
 /**
  * Shared Device Configuration Schema
@@ -158,7 +158,7 @@ export const DEVICE_CONFIG_PATH = path.join(os.homedir(), '.overdrip', 'config.j
  * Load device configuration from the standard location
  * No fallbacks - if the file doesn't exist or is invalid, throw a clear error
  */
-export async function loadDeviceConfig(): Promise<DeviceConfig> {
+export const loadDeviceConfig = async (): Promise<DeviceConfig> => {
   const configPath = DEVICE_CONFIG_PATH;
 
   try {
@@ -206,13 +206,13 @@ export async function loadDeviceConfig(): Promise<DeviceConfig> {
       `Check file permissions and try running 'overdrip setup' if the problem persists.`
     );
   }
-}
+};
 
 /**
  * Save device configuration to the standard location
  * Creates the directory if it doesn't exist
  */
-export async function saveDeviceConfig(config: DeviceConfig): Promise<void> {
+export const saveDeviceConfig = async (config: DeviceConfig): Promise<void> => {
   const configPath = DEVICE_CONFIG_PATH;
 
   try {
@@ -238,16 +238,16 @@ export async function saveDeviceConfig(config: DeviceConfig): Promise<void> {
       `Error: ${error instanceof Error ? error.message : String(error)}`
     );
   }
-}
+};
 
 /**
  * Create a minimal device configuration for initial setup
  */
-export function createMinimalDeviceConfig(
+export const createMinimalDeviceConfig = (
   deviceId: string,
   deviceName: string,
   authCode: string
-): DeviceConfig {
+): DeviceConfig => {
   const now = new Date();
 
   return DeviceConfigSchema.parse({
@@ -268,19 +268,19 @@ export function createMinimalDeviceConfig(
       }
     }
   });
-}
+};
 
 /**
  * Check if device configuration exists
  */
-export async function deviceConfigExists(): Promise<boolean> {
+export const deviceConfigExists = async (): Promise<boolean> => {
   const file = Bun.file(DEVICE_CONFIG_PATH);
   return await file.exists();
-}
+};
 
 /**
  * Get the configuration file path (for display/debugging)
  */
-export function getDeviceConfigPath(): string {
+export const getDeviceConfigPath = (): string => {
   return DEVICE_CONFIG_PATH;
-}
+};

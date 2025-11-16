@@ -7,7 +7,7 @@
  * It handles device authentication, sensor monitoring, and actuator control.
  */
 
-import { OverdripDeviceClient, type DeviceConfig, loadDeviceConfig } from '@overdrip/core';
+import { loadDeviceConfig, OverdripDeviceClient, type DeviceConfig } from '@overdrip/core';
 
 class OverdripRuntime {
   private client: OverdripDeviceClient;
@@ -165,7 +165,7 @@ class OverdripRuntime {
 /**
  * Main function
  */
-async function main(): Promise<void> {
+const main = async (): Promise<void> => {
   console.log('🚀 Overdrip Runtime v0.1.0');
 
   // Handle graceful shutdown
@@ -192,7 +192,7 @@ async function main(): Promise<void> {
   // Create and start runtime
   const runtime = new OverdripRuntime(config);
   await runtime.start();
-}
+};
 
 // Run if this is the main module
 if (import.meta.main) {
