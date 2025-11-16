@@ -19,6 +19,7 @@
   },
   "type": "module",
   "scripts": {
+    "dev": "bun run src/cli.ts",
     "build": "bun build.ts",
     "clean": "bun build.ts clean",
     "typecheck": "tsc --noEmit"
