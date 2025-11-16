@@ -26,6 +26,7 @@ Creates a new device with a custom authentication token and registration code.
 **Request:** None required
 
 **Response:**
+
 ```json
 {
   "deviceId": "550e8400-e29b-41d4-a716-446655440000",
@@ -35,6 +36,7 @@ Creates a new device with a custom authentication token and registration code.
 ```
 
 **What it does:**
+
 1. Generates unique device ID (UUID)
 2. Creates Firebase custom token for that device ID
 3. Generates 8-character registration code (format: `XXXX-XXXX`)
@@ -52,6 +54,7 @@ Links a device to a user account using a registration code.
 **Type:** Callable Function (`onCall`)
 
 **Request:**
+
 ```typescript
 {
   code: string;        // Registration code (e.g., "A3K9-PL2M")
@@ -60,6 +63,7 @@ Links a device to a user account using a registration code.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -68,12 +72,14 @@ Links a device to a user account using a registration code.
 ```
 
 **Error Responses:**
+
 - `unauthenticated` - User not logged in
 - `invalid-argument` - Invalid request data
 - `not-found` - Registration code doesn't exist
 - `deadline-exceeded` - Registration code expired (>24 hours old)
 
 **What it does:**
+
 1. Validates user authentication
 2. Looks up registration code in Firestore
 3. Checks code exists and hasn't expired (24 hour window)
@@ -94,11 +100,13 @@ Scheduled function that automatically deletes expired registration codes.
 **Schedule:** Daily at 3 AM UTC (`0 3 * * *`)
 
 **What it does:**
+
 1. Queries `/registration-codes` collection for codes older than 24 hours
 2. Batch deletes all expired codes
 3. Logs deletion count with structured data for Cloud Monitoring
 
 **Structured logging:**
+
 ```typescript
 info("Registration code cleanup completed", {
   deletedCount: number,
@@ -121,6 +129,7 @@ All functions use shared Zod schemas from `@overdrip/core/schemas` for request/r
 - `RegisterDeviceResponse` - Validated before returning
 
 Example:
+
 ```typescript
 const validationResult = RegisterDeviceRequestSchema.safeParse(req.data);
 if (!validationResult.success) {

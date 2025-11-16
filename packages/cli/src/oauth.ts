@@ -43,10 +43,7 @@ export const generatePKCEChallenge = (): PKCEChallenge => {
  * Base64URL encode (RFC 4648 section 5)
  */
 const base64URLEncode = (buffer: Buffer): string => {
-  return btoa(String.fromCharCode(...buffer))
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=/g, '');
+  return buffer.toString("base64url");
 };
 
 /**
