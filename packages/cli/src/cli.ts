@@ -30,14 +30,6 @@ const configCommand: CommandWithHandler = {
   }
 };
 
-const configVerifyCommand: CommandWithHandler = {
-  name: "config:verify",
-  description: "Verify the device configuration file",
-  handler() {
-    app("config:verify");
-  }
-};
-
 const cli = Clerc.create()
   .name(name)
   .scriptName("overdrip")
@@ -50,7 +42,6 @@ const cli = Clerc.create()
   .use(friendlyErrorPlugin())
   .command(setupCommand)
   .command(startCommand)
-  .command(configCommand)
-  .command(configVerifyCommand);
+  .command(configCommand);
 
 cli.parse();

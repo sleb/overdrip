@@ -1,11 +1,11 @@
-import React from 'react';
-import { Text, Box, Newline } from 'ink';
 import {
-  loadDeviceConfig,
   deviceConfigExists,
   getDeviceConfigPath,
+  loadDeviceConfig,
   type DeviceConfig
 } from '@overdrip/core/device-config';
+import { Box, Newline, Text } from 'ink';
+import React from 'react';
 
 const ConfigShowScreen = () => {
   const [config, setConfig] = React.useState<DeviceConfig | null>(null);
@@ -93,67 +93,6 @@ const ConfigShowScreen = () => {
           <Text>Setup At: <Text color="white">{formatDate(config.setupAt)}</Text></Text>
           <Text>Setup Version: <Text color="white">{config.setupVersion}</Text></Text>
           <Text>Last Modified: <Text color="white">{formatDate(config.lastModified)}</Text></Text>
-        </Box>
-      </Box>
-      <Newline />
-
-      {/* Hardware Configuration */}
-      <Text color="cyan" bold>🔧 Hardware</Text>
-      <Box marginLeft={2}>
-        <Box flexDirection="column">
-          <Text>Moisture Sensors: <Text color="white">{config.hardware.sensors.moisture.length}</Text></Text>
-          <Text>Temperature Sensors: <Text color="white">{config.hardware.sensors.temperature.length}</Text></Text>
-          <Text>Light Sensors: <Text color="white">{config.hardware.sensors.light.length}</Text></Text>
-          <Text>Water Level Sensors: <Text color="white">{config.hardware.sensors.waterLevel.length}</Text></Text>
-          <Text>Water Pump: <Text color="white">{config.hardware.actuators.waterPump ? 'Configured' : 'Not configured'}</Text></Text>
-          <Text>Valves: <Text color="white">{config.hardware.actuators.valves.length}</Text></Text>
-        </Box>
-      </Box>
-      <Newline />
-
-      {/* Watering Configuration */}
-      <Text color="cyan" bold>💧 Watering</Text>
-      <Box marginLeft={2}>
-        <Box flexDirection="column">
-          <Text>Enabled: <Text color={config.watering.enabled ? "green" : "yellow"}>{config.watering.enabled ? 'Yes' : 'No'}</Text></Text>
-          <Text>Timezone: <Text color="white">{config.watering.timezone}</Text></Text>
-          <Text>Schedules: <Text color="white">{config.watering.schedules.length}</Text></Text>
-        </Box>
-      </Box>
-      <Newline />
-
-      {/* Safety Configuration */}
-      <Text color="cyan" bold>🛡️  Safety</Text>
-      <Box marginLeft={2}>
-        <Box flexDirection="column">
-          <Text>Max Watering Duration: <Text color="white">{config.safety.maxWateringDuration / 1000}s</Text></Text>
-          <Text>Min Time Between Watering: <Text color="white">{config.safety.minTimeBetweenWatering / 1000 / 60}min</Text></Text>
-          <Text>Moisture Thresholds: <Text color="white">{config.safety.moistureThresholds.dry}% - {config.safety.moistureThresholds.wet}%</Text></Text>
-          <Text>Emergency Shutoff: <Text color={config.safety.emergencyShutoff.enabled ? "green" : "red"}>{config.safety.emergencyShutoff.enabled ? 'Enabled' : 'Disabled'}</Text></Text>
-        </Box>
-      </Box>
-      <Newline />
-
-      {/* Telemetry Configuration */}
-      <Text color="cyan" bold>📡 Telemetry</Text>
-      <Box marginLeft={2}>
-        <Box flexDirection="column">
-          <Text>Sensor Reading Interval: <Text color="white">{config.telemetry.intervals.sensorReading / 1000}s</Text></Text>
-          <Text>Status Upload Interval: <Text color="white">{config.telemetry.intervals.statusUpload / 1000}s</Text></Text>
-          <Text>Health Check Interval: <Text color="white">{config.telemetry.intervals.healthCheck / 1000}s</Text></Text>
-          <Text>Batch Size: <Text color="white">{config.telemetry.batchSize}</Text></Text>
-        </Box>
-      </Box>
-      <Newline />
-
-      {/* Logging Configuration */}
-      <Text color="cyan" bold>📝 Logging</Text>
-      <Box marginLeft={2}>
-        <Box flexDirection="column">
-          <Text>Level: <Text color="white">{config.logging.level}</Text></Text>
-          <Text>Console: <Text color={config.logging.console ? "green" : "red"}>{config.logging.console ? 'Enabled' : 'Disabled'}</Text></Text>
-          <Text>File: <Text color={config.logging.file ? "green" : "red"}>{config.logging.file ? 'Enabled' : 'Disabled'}</Text></Text>
-          {config.logging.file && <Text>File Path: <Text color="gray">{config.logging.filePath}</Text></Text>}
         </Box>
       </Box>
       <Newline />

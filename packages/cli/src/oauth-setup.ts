@@ -8,7 +8,6 @@ import {
 import { GoogleAuthProvider, signInWithCredential } from "firebase/auth/web-extension";
 import { httpsCallable } from "firebase/functions";
 import { version } from "../package.json";
-import { loadConfig } from "./config";
 import { buildOAuthURL, exchangeCodeForTokens, generatePKCEChallenge } from "./oauth";
 import { OAuthServer } from "./oauth-server";
 
@@ -23,6 +22,46 @@ export interface SetupResult {
   isReauth: boolean;
 }
 
+export interface OauthConfig {
+  oAuthClientId: string;
+  oAuthClientSecret: string;
+}
+
+/**
+ * Create configuration from provided values
+ * This is the core logic separated from the environment variable source
+ */
+export const createConfig = (
+  oAuthClientId: string,
+  oAuthClientSecret: string,
+): OauthConfig => {
+  if (!oAuthClientId || !oAuthClientSecret) {
+    throw new Error("Invalid configuration: OAuth client ID and secret cannot be empty.");
+  }
+
+  return {
+    oAuthClientId: oAuthClientId,
+    oAuthClientSecret: oAuthClientSecret,
+  };
+};
+
+// At build time, Bun will inline these environment variables
+// Development: loaded from .env file in CLI package
+// Production: inlined via --define flags during build
+const GOOGLE_OAUTH_CLIENT_ID = process.env.GOOGLE_OAUTH_CLIENT_ID!;
+const GOOGLE_OAUTH_CLIENT_SECRET = process.env.GOOGLE_OAUTH_CLIENT_SECRET!;
+
+/**
+ * Load configuration from environment variables
+ * Values are captured at module load time for build-time inlining
+ */
+export const loadGoogleOauthConfig = (): OauthConfig => {
+  return createConfig(
+    GOOGLE_OAUTH_CLIENT_ID,
+    GOOGLE_OAUTH_CLIENT_SECRET,
+  );
+};
+
 /**
  * Complete OAuth-based device setup flow
  */
@@ -33,7 +72,7 @@ export const oauthSetupDevice = async (
   onProgress({ step: "initializing" });
 
   // Load configuration
-  const config = loadConfig();
+  const config = loadGoogleOauthConfig();
 
   // Check if this is a re-authentication
   const existingDeviceInfo = await loadDeviceConfig();
@@ -50,7 +89,7 @@ export const oauthSetupDevice = async (
 
   // Build OAuth URL
   const oauthUrl = buildOAuthURL(
-    config.googleOAuthClientId,
+    config.oAuthClientId,
     redirectUri,
     pkceChallenge
   );
@@ -81,11 +120,11 @@ export const oauthSetupDevice = async (
   let tokenResponse;
   try {
     tokenResponse = await exchangeCodeForTokens(
-      config.googleOAuthClientId,
+      config.oAuthClientId,
       redirectUri,
       callbackResult.code,
       pkceChallenge.codeVerifier,
-      config.googleOAuthClientSecret
+      config.oAuthClientSecret
     );
   } catch (error) {
     throw new Error(`Token exchange failed: ${error instanceof Error ? error.message : String(error)}`);

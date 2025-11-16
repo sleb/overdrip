@@ -1,6 +1,5 @@
 import { render } from "ink";
 import ConfigShowScreen from "./components/config-show-screen";
-import ConfigVerifyScreen from "./components/config-verify-screen";
 import Layout from "./components/layout";
 import OAuthSetupScreen from "./components/oauth-setup-screen";
 import StartScreen from "./components/start-screen";
@@ -15,7 +14,6 @@ const App = ({ page }: Props) => {
     <Layout>
       {page === "setup" && <OAuthSetupScreen />}
       {page === "start" && <StartScreen />}
-      {page === "config:verify" && <ConfigVerifyScreen />}
       {page === "config:show" && <ConfigShowScreen />}
     </Layout>
   );

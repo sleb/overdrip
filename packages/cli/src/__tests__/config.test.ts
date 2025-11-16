@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { createConfig } from "../config";
+import { createConfig } from "../oauth-setup";
 
 describe("Configuration", () => {
   describe("createConfig", () => {
@@ -12,8 +12,8 @@ describe("Configuration", () => {
       );
 
       expect(config).toEqual({
-        googleOAuthClientId: clientId,
-        googleOAuthClientSecret: clientSecret,
+        oAuthClientId: clientId,
+        oAuthClientSecret: clientSecret,
       });
     });
 

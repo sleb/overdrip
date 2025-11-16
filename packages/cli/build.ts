@@ -7,14 +7,15 @@
 
 import { $ } from "bun";
 import { parseArgs } from "node:util";
-import { loadConfig } from "./src/config";
+import { loadGoogleOauthConfig } from "./src/oauth-setup";
 
 /**
  * Validate required environment variables for production builds
  */
 const validateEnv = () => {
   try {
-    loadConfig();
+    // TODO: abstract to other OAuth providers if needed
+    loadGoogleOauthConfig();
   } catch (e) {
     console.error("❌ Error loading configuration:", e);
     process.exit(1);
