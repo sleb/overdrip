@@ -24,8 +24,8 @@
       "import": "./src/device-config.ts"
     }
   },
-"dependencies": {
-  "firebase": "^12.5.0",
-  "zod": "^3.24.1"
-}
+  "dependencies": {
+    "firebase": "^12.5.0",
+    "zod": "^3.24.1"
+  }
 }

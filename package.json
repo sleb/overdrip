@@ -11,18 +11,10 @@
     "eslint": "^9.39.1"
   },
   "scripts": {
-    "cli:dev": "cd packages/cli && bun src/cli.ts",
-    "cli:build": "bun packages/cli/build.ts build",
-    "cli:build:release": "bun packages/cli/build.ts build:release",
-    "cli:clean": "bun packages/cli/build.ts clean",
-    "runtime:dev": "cd packages/runtime && bun --hot src/index.ts",
-    "runtime:start": "cd packages/runtime && bun src/index.ts",
-    "test": "bun test packages/core/src/__tests__ packages/functions/src/__tests__ packages/cli/src/__tests__",
-    "test:core": "bun test packages/core/src/__tests__",
-    "test:functions": "bun test packages/functions/src/__tests__",
-    "test:cli": "bun test packages/cli/src/__tests__",
-    "test:runtime": "bun test packages/runtime/src/__tests__",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "build": "bun run --workspaces --if-present build",
+    "clean": "bun run --workspaces --if-present clean",
+    "dev": "bun run --workspaces --if-present dev",
+    "lint": "bun run --workspaces lint",
+    "typecheck": "bun run --workspaces typecheck"
   }
 }

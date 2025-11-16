@@ -12,19 +12,14 @@
     "ink-big-text": "^2.0.0",
     "ink-gradient": "^3.0.0",
     "ink-spinner": "^5.0.0",
-    "ink-text-input": "^6.0.0",
-    "react-devtools-core": "^7.0.1"
+    "ink-text-input": "^6.0.0"
   },
   "bin": {
     "overdrip": "./src/cli.ts"
   },
   "type": "module",
   "scripts": {
-    "dev": "bun src/cli.ts",
-    "build": "bun build.ts build",
-    "build:release": "bun build.ts build:release",
-    "clean": "bun build.ts clean",
-    "test": "bun test-oauth.ts",
-    "test:real-oauth": "bun test-real-oauth.ts"
+    "build": "bun build.ts",
+    "clean": "bun build.ts clean"
   }
 }

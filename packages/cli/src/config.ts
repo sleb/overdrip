@@ -9,7 +9,6 @@
 export interface CliConfig {
   googleOAuthClientId: string;
   googleOAuthClientSecret: string;
-  firebaseFunctionsUrl: string;
 }
 
 /**
@@ -19,12 +18,14 @@ export interface CliConfig {
 export const createConfig = (
   googleOAuthClientId: string,
   googleOAuthClientSecret: string,
-  firebaseFunctionsUrl: string
 ): CliConfig => {
+  if (!googleOAuthClientId || !googleOAuthClientSecret) {
+    throw new Error("Invalid configuration: Google OAuth client ID and secret cannot be empty.");
+  }
+
   return {
     googleOAuthClientId,
     googleOAuthClientSecret,
-    firebaseFunctionsUrl,
   };
 };
 
@@ -33,7 +34,6 @@ export const createConfig = (
 // Production: inlined via --define flags during build
 const GOOGLE_OAUTH_CLIENT_ID = process.env.GOOGLE_OAUTH_CLIENT_ID!;
 const GOOGLE_OAUTH_CLIENT_SECRET = process.env.GOOGLE_OAUTH_CLIENT_SECRET!;
-const FIREBASE_FUNCTIONS_URL = process.env.FIREBASE_FUNCTIONS_URL!;
 
 /**
  * Load configuration from environment variables
@@ -43,6 +43,5 @@ export const loadConfig = (): CliConfig => {
   return createConfig(
     GOOGLE_OAUTH_CLIENT_ID,
     GOOGLE_OAUTH_CLIENT_SECRET,
-    FIREBASE_FUNCTIONS_URL
   );
 };
