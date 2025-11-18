@@ -10,16 +10,6 @@ This package provides common functionality used across all packages (CLI, web ap
 - **Firebase client SDK initialization**
 - **Type-safe API contracts** (Zod schemas)
 
-## Package Organization
-
-Following the principle of platform-specific separation:
-
-- **CLI-specific code** → `packages/cli/` (uses Bun APIs like `Bun.file`)
-- **Web-specific code** → `packages/web/` (browser-safe code only)
-- **Shared code** → `packages/core/` (platform-agnostic)
-
-This package contains **only** code that can run in any environment (Node.js, Bun, browser).
-
 ## Exports
 
 ### Config (`@overdrip/core/config`)

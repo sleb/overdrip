@@ -1,4 +1,4 @@
-import { signInWithCustomToken } from "firebase/auth/web-extension";
+import { signInWithCustomToken } from "firebase/auth";
 import { auth } from "../firebase";
 
 export interface DeviceClientOptions {

@@ -8,6 +8,7 @@
     "@clerc/plugin-version": "^0.44.0",
     "@overdrip/core": "workspace:*",
     "@overdrip/runtime": "workspace:*",
+    "bunyan": "^1.8.15",
     "clerc": "^0.44.0",
     "ink": "^6.4.0",
     "ink-big-text": "^2.0.0",
@@ -24,5 +25,8 @@
     "build": "bun build.ts",
     "clean": "bun build.ts clean",
     "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
   }
 }

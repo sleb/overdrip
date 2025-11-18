@@ -3,7 +3,7 @@ import { loadDeviceConfig } from "@overdrip/core/device-config";
 import { OverdripRuntime } from "@overdrip/runtime";
 import { Box, Newline, Text } from "ink";
 import Spinner from "ink-spinner";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 type StartState = "loading" | "authenticating" | "running" | "error";
 
@@ -14,7 +14,7 @@ interface StartScreenState {
   error?: string;
 }
 
-const StartScreen: React.FC = () => {
+const StartScreen = () => {
   const [screenState, setScreenState] = useState<StartScreenState>({
     state: "loading",
   });
@@ -28,7 +28,7 @@ const StartScreen: React.FC = () => {
       // Check if device is set up
       setScreenState({ state: "loading" });
 
-      const deviceInfo = (await loadDeviceConfig());
+      const deviceInfo = await loadDeviceConfig();
       if (!deviceInfo) {
         throw new Error(
           "No device credentials found. Please run 'overdrip setup' to register your device."

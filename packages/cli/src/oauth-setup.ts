@@ -5,7 +5,7 @@ import {
   SetupDeviceResponseSchema,
   type SetupDeviceResponse
 } from "@overdrip/core/schemas";
-import { GoogleAuthProvider, signInWithCredential } from "firebase/auth/web-extension";
+import { GoogleAuthProvider, signInWithCredential } from "firebase/auth";
 import { httpsCallable } from "firebase/functions";
 import { version } from "../package.json";
 import { buildOAuthURL, exchangeCodeForTokens, generatePKCEChallenge } from "./oauth";
